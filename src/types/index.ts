@@ -5,7 +5,7 @@
 
 export type ClientStatus = "lead" | "analysis" | "closed" | "lost";
 
-export type SimulationType = "financing" | "credit_card" | "cash" | "consortium";
+export type SimulationType = "financing" | "credit_card" | "cash";
 
 export type RateSemaphore = "excellent" | "average" | "expensive";
 

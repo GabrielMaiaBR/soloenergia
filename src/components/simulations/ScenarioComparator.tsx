@@ -24,7 +24,23 @@ const typeLabels: Record<string, string> = {
   financing: "Financiamento",
   credit_card: "Cartão",
   cash: "À Vista",
-  consortium: "Consórcio",
+};
+
+// Helper function to format payback properly (months to years/months)
+const formatPayback = (months?: number) => {
+  if (months === undefined || months === null) return "-";
+  if (months === Infinity || isNaN(months)) return "N/A";
+  
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+  
+  if (years === 0) {
+    return `${months} ${months === 1 ? "mês" : "meses"}`;
+  } else if (remainingMonths === 0) {
+    return `${years} ${years === 1 ? "ano" : "anos"}`;
+  } else {
+    return `${years} ${years === 1 ? "ano" : "anos"} e ${remainingMonths} ${remainingMonths === 1 ? "mês" : "meses"}`;
+  }
 };
 
 export function ScenarioComparator({
@@ -45,7 +61,7 @@ export function ScenarioComparator({
 
     const values = selectedSimulations
       .map((s) => ({ id: s.id, value: s[key] as number | undefined }))
-      .filter((v) => v.value !== undefined && v.value !== null);
+      .filter((v) => v.value !== undefined && v.value !== null && isFinite(v.value as number));
 
     if (values.length === 0) return undefined;
 
@@ -234,7 +250,7 @@ export function ScenarioComparator({
                     ))}
                   </tr>
 
-                  {/* Payback */}
+                  {/* Payback - FIXED: now using proper formatting */}
                   <tr className="border-b">
                     <td className="p-3 text-muted-foreground">Payback</td>
                     {selectedSimulations.map((sim) => (
@@ -247,9 +263,7 @@ export function ScenarioComparator({
                       >
                         {sim.payback_months !== undefined ? (
                           <div className="flex flex-col items-center gap-1">
-                            <span>
-                              {Math.floor(sim.payback_months / 12)} anos e {sim.payback_months % 12} meses
-                            </span>
+                            <span>{formatPayback(sim.payback_months)}</span>
                             {sim.id === bestPayback && (
                               <Badge className="bg-solo-success text-white text-xs">Melhor</Badge>
                             )}
@@ -293,6 +307,14 @@ export function ScenarioComparator({
                   <p>
                     ⚠️ Algumas opções exigem <strong>desembolso mensal</strong> durante o
                     financiamento, pressionando o caixa do cliente.
+                  </p>
+                )}
+                {/* Additional insight about payback */}
+                {bestPayback && selectedSimulations.find((s) => s.id === bestPayback) && (
+                  <p>
+                    ⏱️ O menor tempo de retorno é da opção <strong>
+                      {selectedSimulations.find((s) => s.id === bestPayback)?.name}
+                    </strong> com payback de {formatPayback(selectedSimulations.find((s) => s.id === bestPayback)?.payback_months)}.
                   </p>
                 )}
               </div>

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Zap, TrendingUp, DollarSign, Star, FileText, Plus, BarChart3, Edit, LineChart } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Zap, TrendingUp, DollarSign, Star, FileText, Plus, BarChart3, Edit, LineChart, PieChart } from "lucide-react";
 import { useClient } from "@/hooks/useClients";
 import { useClientSimulations } from "@/hooks/useSimulations";
 import { useSettings } from "@/hooks/useSettings";
@@ -11,9 +12,11 @@ import { SimulationModal } from "@/components/simulations/SimulationModal";
 import { SimulationCard } from "@/components/simulations/SimulationCard";
 import { ScenarioComparator } from "@/components/simulations/ScenarioComparator";
 import { TariffProjectionChart } from "@/components/simulations/TariffProjectionChart";
+import { EconomyChartsTab } from "@/components/simulations/EconomyChartsTab";
 import { TimelineSection } from "@/components/timeline/TimelineSection";
 import { ReportGenerator } from "@/components/reports/ReportGenerator";
 import { formatCurrency, calculateRealEconomy } from "@/lib/financial";
+
 export default function ClientCockpit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,8 +29,8 @@ export default function ClientCockpit() {
   const [showSimulationModal, setShowSimulationModal] = useState(false);
   const [showComparator, setShowComparator] = useState(false);
   const [showReport, setShowReport] = useState(false);
-  const [showProjection, setShowProjection] = useState(false);
   const [selectedSimulations, setSelectedSimulations] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("simulations");
 
   if (clientLoading || !client) {
     return (
@@ -110,34 +113,21 @@ export default function ClientCockpit() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              R$ {(client.energy_tariff || settings?.default_tariff || 0.85).toFixed(2)}/kWh
+              R$ {tariff.toFixed(2)}/kWh
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Cash Benchmark */}
-      <Card className="border-dashed border-solo-trust/30 bg-solo-trust/5">
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">
-            💡 <strong>Benchmark:</strong> Se o cliente pagasse à vista, não pagaria juros e o payback seria mais rápido.
-          </p>
-        </CardContent>
-      </Card>
-
       {/* Actions */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-4">
         <Button className="gap-2 h-auto py-4 flex-col" onClick={() => setShowSimulationModal(true)}>
           <Plus className="h-5 w-5" />
           Nova Simulação
         </Button>
         <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowComparator(true)} disabled={simulations.length < 2}>
           <BarChart3 className="h-5 w-5" />
-          Comparar
-        </Button>
-        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowProjection(!showProjection)} disabled={!monthlyEconomy}>
-          <LineChart className="h-5 w-5" />
-          Projeção
+          Comparar ({simulations.length})
         </Button>
         <Button variant="outline" className="gap-2 h-auto py-4 flex-col" disabled>
           <Star className="h-5 w-5" />
@@ -149,46 +139,76 @@ export default function ClientCockpit() {
         </Button>
       </div>
 
-      {/* Tariff Projection Chart */}
-      {showProjection && monthlyEconomy > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LineChart className="h-5 w-5 text-primary" />
-              Projeção de Economia (25 anos)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TariffProjectionChart
-              baseMonthlyEconomy={monthlyEconomy}
-              tariffIncreaseRate={averageTariffIncrease}
-              systemValue={simulations[0]?.system_value}
-            />
-          </CardContent>
-        </Card>
-      )}
-      <Card>
-        <CardHeader>
-          <CardTitle>Simulações</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {simulations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Nenhuma simulação criada ainda.</p>
-              <p className="text-sm mt-2">Clique em "Nova Simulação" para começar.</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {simulations.map((sim) => (
-                <SimulationCard key={sim.id} simulation={sim} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Tabs for different views */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-4 w-full max-w-lg">
+          <TabsTrigger value="simulations">Simulações</TabsTrigger>
+          <TabsTrigger value="charts">Gráficos</TabsTrigger>
+          <TabsTrigger value="projection">Projeção</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+        </TabsList>
 
-      {/* Timeline */}
-      <TimelineSection clientId={client.id} />
+        <TabsContent value="simulations" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Simulações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {simulations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhuma simulação criada ainda.</p>
+                  <p className="text-sm mt-2">Clique em "Nova Simulação" para começar.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {simulations.map((sim) => (
+                    <SimulationCard key={sim.id} simulation={sim} client={client} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="charts" className="mt-6">
+          <EconomyChartsTab 
+            simulations={simulations} 
+            client={client} 
+            monthlyEconomy={monthlyEconomy} 
+          />
+        </TabsContent>
+
+        <TabsContent value="projection" className="mt-6">
+          {monthlyEconomy > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LineChart className="h-5 w-5 text-primary" />
+                  Projeção de Economia (25 anos)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TariffProjectionChart
+                  baseMonthlyEconomy={monthlyEconomy}
+                  tariffIncreaseRate={averageTariffIncrease}
+                  systemValue={simulations[0]?.system_value}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <LineChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Configure a geração mensal do cliente para ver a projeção.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="timeline" className="mt-6">
+          <TimelineSection clientId={client.id} />
+        </TabsContent>
+      </Tabs>
 
       {/* Modals */}
       <ClientFormDialog open={showEditClient} onOpenChange={setShowEditClient} client={client} />

@@ -44,7 +44,6 @@ const typeLabels: Record<SimulationType, string> = {
   financing: "Financiamento",
   credit_card: "Cartão de Crédito",
   cash: "À Vista",
-  consortium: "Consórcio",
 };
 
 export function SimulationModal({ open, onOpenChange, client }: SimulationModalProps) {
@@ -255,7 +254,7 @@ export function SimulationModal({ open, onOpenChange, client }: SimulationModalP
           <div className="space-y-6">
             {/* Type Selection */}
             <Tabs value={type} onValueChange={(v) => setType(v as SimulationType)}>
-              <TabsList className="grid grid-cols-4 w-full">
+              <TabsList className="grid grid-cols-3 w-full">
                 {(Object.keys(typeLabels) as SimulationType[]).map((t) => (
                   <TabsTrigger key={t} value={t}>
                     {typeLabels[t]}
