@@ -2,22 +2,25 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Sun, Loader2 } from "lucide-react";
+import { Sun, Loader2, ArrowLeft } from "lucide-react";
 
 // Validation schemas
 const emailSchema = z.string().email("Email inválido");
 const passwordSchema = z.string().min(6, "Senha deve ter no mínimo 6 caracteres");
 
+type AuthMode = "login" | "signup" | "forgot-password";
+
 export default function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp, isAuthenticated, loading } = useAuth();
   
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -39,13 +42,15 @@ export default function Auth() {
       newErrors.email = emailResult.error.errors[0].message;
     }
     
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
-    }
-    
-    if (isSignUp && password !== confirmPassword) {
-      newErrors.confirmPassword = "Senhas não coincidem";
+    if (mode !== "forgot-password") {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
+      
+      if (mode === "signup" && password !== confirmPassword) {
+        newErrors.confirmPassword = "Senhas não coincidem";
+      }
     }
     
     setErrors(newErrors);
@@ -60,7 +65,18 @@ export default function Auth() {
     setIsSubmitting(true);
     
     try {
-      if (isSignUp) {
+      if (mode === "forgot-password") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth`,
+        });
+        
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+          setMode("login");
+        }
+      } else if (mode === "signup") {
         const { error } = await signUp(email, password);
         if (error) {
           if (error.message.includes("already registered")) {
@@ -88,6 +104,13 @@ export default function Auth() {
     }
   };
 
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    setErrors({});
+    setPassword("");
+    setConfirmPassword("");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -96,22 +119,44 @@ export default function Auth() {
     );
   }
 
+  const getTitle = () => {
+    switch (mode) {
+      case "signup": return "Criar Conta";
+      case "forgot-password": return "Recuperar Senha";
+      default: return "Solo Smart";
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case "signup": return "Crie sua conta para acessar o sistema";
+      case "forgot-password": return "Digite seu email para receber o link de recuperação";
+      default: return "Entre com sua conta para continuar";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          {mode === "forgot-password" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute left-4 top-4"
+              onClick={() => switchMode("login")}
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Voltar
+            </Button>
+          )}
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
               <Sun className="h-8 w-8 text-background" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Solo Smart</CardTitle>
-          <CardDescription>
-            {isSignUp 
-              ? "Crie sua conta para acessar o sistema" 
-              : "Entre com sua conta para continuar"
-            }
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">{getTitle()}</CardTitle>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -131,23 +176,25 @@ export default function Auth() {
               )}
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isSubmitting}
-                className={errors.password ? "border-destructive" : ""}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
+            {mode !== "forgot-password" && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  className={errors.password ? "border-destructive" : ""}
+                />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+            )}
             
-            {isSignUp && (
+            {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                 <Input
@@ -173,30 +220,42 @@ export default function Auth() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isSignUp ? "Criando conta..." : "Entrando..."}
+                  {mode === "signup" ? "Criando conta..." : mode === "forgot-password" ? "Enviando..." : "Entrando..."}
                 </>
               ) : (
-                isSignUp ? "Criar Conta" : "Entrar"
+                mode === "signup" ? "Criar Conta" : mode === "forgot-password" ? "Enviar Link" : "Entrar"
               )}
             </Button>
           </form>
           
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrors({});
-              }}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              disabled={isSubmitting}
-            >
-              {isSignUp 
-                ? "Já tem uma conta? Faça login" 
-                : "Não tem conta? Cadastre-se"
-              }
-            </button>
-          </div>
+          {mode === "login" && (
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => switchMode("forgot-password")}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                disabled={isSubmitting}
+              >
+                Esqueceu sua senha?
+              </button>
+            </div>
+          )}
+          
+          {mode !== "forgot-password" && (
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => switchMode(mode === "signup" ? "login" : "signup")}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                disabled={isSubmitting}
+              >
+                {mode === "signup" 
+                  ? "Já tem uma conta? Faça login" 
+                  : "Não tem conta? Cadastre-se"
+                }
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

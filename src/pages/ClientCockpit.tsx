@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Zap, TrendingUp, DollarSign, Star, FileText, Plus, BarChart3, Edit } from "lucide-react";
+import { ArrowLeft, Zap, TrendingUp, DollarSign, Star, FileText, Plus, BarChart3, Edit, LineChart } from "lucide-react";
 import { useClient } from "@/hooks/useClients";
 import { useClientSimulations } from "@/hooks/useSimulations";
 import { useSettings } from "@/hooks/useSettings";
@@ -10,10 +10,10 @@ import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { SimulationModal } from "@/components/simulations/SimulationModal";
 import { SimulationCard } from "@/components/simulations/SimulationCard";
 import { ScenarioComparator } from "@/components/simulations/ScenarioComparator";
+import { TariffProjectionChart } from "@/components/simulations/TariffProjectionChart";
 import { TimelineSection } from "@/components/timeline/TimelineSection";
 import { ReportGenerator } from "@/components/reports/ReportGenerator";
-import { formatCurrency } from "@/lib/financial";
-
+import { formatCurrency, calculateRealEconomy } from "@/lib/financial";
 export default function ClientCockpit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ export default function ClientCockpit() {
   const [showSimulationModal, setShowSimulationModal] = useState(false);
   const [showComparator, setShowComparator] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showProjection, setShowProjection] = useState(false);
   const [selectedSimulations, setSelectedSimulations] = useState<string[]>([]);
 
   if (clientLoading || !client) {
@@ -37,8 +38,12 @@ export default function ClientCockpit() {
   }
 
   const lei14300Factor = settings?.lei_14300_factor || 0.85;
-  const monthlyEconomy = (client.monthly_generation_kwh || 0) * lei14300Factor * (client.energy_tariff || settings?.default_tariff || 0.85);
+  const tariff = client.energy_tariff || settings?.default_tariff || 0.85;
+  const monthlyEconomy = calculateRealEconomy(client.monthly_generation_kwh || 0, tariff, lei14300Factor);
   const favoriteSimulations = simulations.filter((s) => s.is_favorite);
+  const averageTariffIncrease = simulations.length > 0 
+    ? simulations.reduce((acc, s) => acc + (s.tariff_increase_rate || 8), 0) / simulations.length 
+    : 8;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -121,7 +126,7 @@ export default function ClientCockpit() {
       </Card>
 
       {/* Actions */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Button className="gap-2 h-auto py-4 flex-col" onClick={() => setShowSimulationModal(true)}>
           <Plus className="h-5 w-5" />
           Nova Simulação
@@ -129,6 +134,10 @@ export default function ClientCockpit() {
         <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowComparator(true)} disabled={simulations.length < 2}>
           <BarChart3 className="h-5 w-5" />
           Comparar
+        </Button>
+        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowProjection(!showProjection)} disabled={!monthlyEconomy}>
+          <LineChart className="h-5 w-5" />
+          Projeção
         </Button>
         <Button variant="outline" className="gap-2 h-auto py-4 flex-col" disabled>
           <Star className="h-5 w-5" />
@@ -140,7 +149,24 @@ export default function ClientCockpit() {
         </Button>
       </div>
 
-      {/* Simulations List */}
+      {/* Tariff Projection Chart */}
+      {showProjection && monthlyEconomy > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LineChart className="h-5 w-5 text-primary" />
+              Projeção de Economia (25 anos)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TariffProjectionChart
+              baseMonthlyEconomy={monthlyEconomy}
+              tariffIncreaseRate={averageTariffIncrease}
+              systemValue={simulations[0]?.system_value}
+            />
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Simulações</CardTitle>
