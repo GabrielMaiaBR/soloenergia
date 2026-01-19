@@ -3,15 +3,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Save, Download, Upload } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Download, Moon, Sun } from "lucide-react";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { useClients } from "@/hooks/useClients";
+import { useTheme } from "@/hooks/useTheme";
+import { LogoUpload } from "@/components/settings/LogoUpload";
 import { toast } from "sonner";
 
 export default function Settings() {
   const { data: settings, isLoading } = useSettings();
   const { data: clients = [] } = useClients();
   const updateSettings = useUpdateSettings();
+  const { theme, toggleTheme } = useTheme();
 
   const handleSave = async (updates: Partial<typeof settings>) => {
     if (!settings) return;
@@ -41,6 +45,28 @@ export default function Settings() {
         <p className="text-muted-foreground">Personalize o Solo Smart para seu negócio</p>
       </div>
 
+      {/* Appearance */}
+      <Card>
+        <CardHeader><CardTitle>Aparência</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Modo Escuro</Label>
+              <p className="text-xs text-muted-foreground">Alternar entre tema claro e escuro</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4 text-muted-foreground" />
+              <Switch
+                checked={theme === "dark"}
+                onCheckedChange={toggleTheme}
+              />
+              <Moon className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Lei 14.300 */}
       <Card>
         <CardHeader><CardTitle>Lei 14.300</CardTitle></CardHeader>
         <CardContent className="space-y-6">
@@ -67,9 +93,12 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      {/* Branding */}
       <Card>
         <CardHeader><CardTitle>Branding</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          <LogoUpload currentLogoUrl={settings.logo_url} />
+          
           <div className="space-y-2">
             <Label>Nome da Empresa</Label>
             <Input
@@ -98,6 +127,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      {/* Backup */}
       <Card>
         <CardHeader><CardTitle>Backup de Dados</CardTitle></CardHeader>
         <CardContent className="space-y-4">
