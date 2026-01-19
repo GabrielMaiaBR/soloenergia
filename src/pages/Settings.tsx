@@ -3,134 +3,113 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Save } from "lucide-react";
-import { useState } from "react";
+import { Save, Download, Upload } from "lucide-react";
+import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
+import { useClients } from "@/hooks/useClients";
+import { toast } from "sonner";
 
 export default function Settings() {
-  const [settings, setSettings] = useState({
-    lei14300Factor: 85,
-    defaultTariff: 0.85,
-    companyName: "",
-    contactPhone: "",
-    contactEmail: "",
-  });
+  const { data: settings, isLoading } = useSettings();
+  const { data: clients = [] } = useClients();
+  const updateSettings = useUpdateSettings();
 
-  const handleSave = () => {
-    // TODO: Save to database
-    console.log("Settings saved:", settings);
+  const handleSave = async (updates: Partial<typeof settings>) => {
+    if (!settings) return;
+    await updateSettings.mutateAsync(updates);
   };
+
+  const handleExport = () => {
+    const data = { clients, settings };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `solosmart-backup-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Backup exportado!");
+  };
+
+  if (isLoading || !settings) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
+  }
 
   return (
     <div className="space-y-8 animate-fade-in max-w-2xl">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Configurações</h1>
         <p className="text-muted-foreground">Personalize o Solo Smart para seu negócio</p>
       </div>
 
-      {/* Lei 14.300 Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lei 14.300</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Lei 14.300</CardTitle></CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="lei-factor">Fator de Compensação (Fio B)</Label>
-              <span className="text-sm font-medium">{settings.lei14300Factor}%</span>
+              <Label>Fator de Compensação (Fio B)</Label>
+              <span className="text-sm font-medium">{(settings.lei_14300_factor * 100).toFixed(0)}%</span>
             </div>
             <Slider
-              id="lei-factor"
-              value={[settings.lei14300Factor]}
-              onValueChange={([value]) => setSettings({ ...settings, lei14300Factor: value })}
-              min={50}
-              max={100}
-              step={1}
-              className="w-full"
+              value={[settings.lei_14300_factor * 100]}
+              onValueChange={([value]) => handleSave({ lei_14300_factor: value / 100 })}
+              min={50} max={100} step={1}
             />
-            <p className="text-xs text-muted-foreground">
-              Define quanto da geração é efetivamente compensada após aplicação da Lei 14.300.
-              Valores típicos: 85% (residencial) a 90% (comercial).
-            </p>
+            <p className="text-xs text-muted-foreground">Define quanto da geração é compensada após a Lei 14.300.</p>
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="tariff">Tarifa Padrão (R$/kWh)</Label>
+            <Label>Tarifa Padrão (R$/kWh)</Label>
             <Input
-              id="tariff"
-              type="number"
-              step="0.01"
-              value={settings.defaultTariff}
-              onChange={(e) => setSettings({ ...settings, defaultTariff: parseFloat(e.target.value) || 0 })}
+              type="number" step="0.01"
+              value={settings.default_tariff}
+              onChange={(e) => handleSave({ default_tariff: parseFloat(e.target.value) || 0.85 })}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Branding */}
       <Card>
-        <CardHeader>
-          <CardTitle>Branding</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Branding</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="company">Nome da Empresa</Label>
+            <Label>Nome da Empresa</Label>
             <Input
-              id="company"
               placeholder="Sua Empresa Solar"
-              value={settings.companyName}
-              onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
+              value={settings.company_name || ""}
+              onChange={(e) => handleSave({ company_name: e.target.value })}
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="phone">WhatsApp / Telefone</Label>
+            <Label>WhatsApp / Telefone</Label>
             <Input
-              id="phone"
               placeholder="(11) 99999-9999"
-              value={settings.contactPhone}
-              onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
+              value={settings.contact_phone || ""}
+              onChange={(e) => handleSave({ contact_phone: e.target.value })}
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+            <Label>E-mail</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="contato@empresa.com"
-              value={settings.contactEmail}
-              onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+              type="email" placeholder="contato@empresa.com"
+              value={settings.contact_email || ""}
+              onChange={(e) => handleSave({ contact_email: e.target.value })}
             />
           </div>
-
-          <p className="text-xs text-muted-foreground">
-            Essas informações aparecerão nos relatórios enviados aos clientes.
-          </p>
+          <p className="text-xs text-muted-foreground">Aparecerão nos relatórios enviados aos clientes.</p>
         </CardContent>
       </Card>
 
-      {/* Backup */}
       <Card>
-        <CardHeader>
-          <CardTitle>Backup de Dados</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Backup de Dados</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Exporte seus dados periodicamente para garantir que não perca informações importantes.
-          </p>
+          <p className="text-sm text-muted-foreground">Exporte seus dados para garantir que não perca informações.</p>
           <div className="flex gap-4">
-            <Button variant="outline">Exportar Dados (JSON)</Button>
-            <Button variant="outline">Importar Backup</Button>
+            <Button variant="outline" onClick={handleExport} className="gap-2">
+              <Download className="h-4 w-4" />
+              Exportar JSON
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {/* Save Button */}
-      <Button onClick={handleSave} className="gap-2">
-        <Save className="h-4 w-4" />
-        Salvar Configurações
-      </Button>
     </div>
   );
 }

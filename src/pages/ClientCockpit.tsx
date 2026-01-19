@@ -1,41 +1,44 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowLeft, 
-  Zap, 
-  TrendingUp, 
-  DollarSign, 
-  Star, 
-  FileText, 
-  Plus,
-  BarChart3
-} from "lucide-react";
-
-// Temporary mock data
-const mockClient = {
-  id: "1",
-  name: "João Silva",
-  phone: "(11) 99999-1234",
-  status: "analysis" as const,
-  system_power_kwp: 8.5,
-  monthly_generation_kwh: 1100,
-  energy_tariff: 0.85,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
+import { ArrowLeft, Zap, TrendingUp, DollarSign, Star, FileText, Plus, BarChart3, Edit } from "lucide-react";
+import { useClient } from "@/hooks/useClients";
+import { useClientSimulations } from "@/hooks/useSimulations";
+import { useSettings } from "@/hooks/useSettings";
+import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { SimulationModal } from "@/components/simulations/SimulationModal";
+import { SimulationCard } from "@/components/simulations/SimulationCard";
+import { ScenarioComparator } from "@/components/simulations/ScenarioComparator";
+import { TimelineSection } from "@/components/timeline/TimelineSection";
+import { ReportGenerator } from "@/components/reports/ReportGenerator";
+import { formatCurrency } from "@/lib/financial";
 
 export default function ClientCockpit() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // TODO: Fetch client from database
-  const client = mockClient;
+  const { data: client, isLoading: clientLoading } = useClient(id);
+  const { data: simulations = [] } = useClientSimulations(id);
+  const { data: settings } = useSettings();
 
-  // Calculate economy with Lei 14.300 (85% factor)
-  const lei14300Factor = 0.85;
-  const monthlyEconomy = (client.monthly_generation_kwh || 0) * lei14300Factor * (client.energy_tariff || 0);
+  const [showEditClient, setShowEditClient] = useState(false);
+  const [showSimulationModal, setShowSimulationModal] = useState(false);
+  const [showComparator, setShowComparator] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [selectedSimulations, setSelectedSimulations] = useState<string[]>([]);
+
+  if (clientLoading || !client) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  const lei14300Factor = settings?.lei_14300_factor || 0.85;
+  const monthlyEconomy = (client.monthly_generation_kwh || 0) * lei14300Factor * (client.energy_tariff || settings?.default_tariff || 0.85);
+  const favoriteSimulations = simulations.filter((s) => s.is_favorite);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -48,6 +51,9 @@ export default function ClientCockpit() {
           <h1 className="text-2xl font-semibold">{client.name}</h1>
           <p className="text-muted-foreground">Cockpit do Cliente</p>
         </div>
+        <Button variant="outline" size="icon" onClick={() => setShowEditClient(true)}>
+          <Edit className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Project Summary */}
@@ -60,7 +66,7 @@ export default function ClientCockpit() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{client.system_power_kwp} kWp</div>
+            <div className="text-2xl font-bold">{client.system_power_kwp || "-"} kWp</div>
           </CardContent>
         </Card>
 
@@ -72,7 +78,7 @@ export default function ClientCockpit() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{client.monthly_generation_kwh} kWh</div>
+            <div className="text-2xl font-bold">{client.monthly_generation_kwh || "-"} kWh</div>
           </CardContent>
         </Card>
 
@@ -85,7 +91,7 @@ export default function ClientCockpit() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-solo-success">
-              R$ {monthlyEconomy.toFixed(0)}
+              {formatCurrency(monthlyEconomy)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Com Lei 14.300 ({(lei14300Factor * 100).toFixed(0)}%)
@@ -95,13 +101,11 @@ export default function ClientCockpit() {
 
         <Card className="transition-solo">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tarifa
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Tarifa</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              R$ {client.energy_tariff?.toFixed(2)}/kWh
+              R$ {(client.energy_tariff || settings?.default_tariff || 0.85).toFixed(2)}/kWh
             </div>
           </CardContent>
         </Card>
@@ -118,19 +122,19 @@ export default function ClientCockpit() {
 
       {/* Actions */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Button className="gap-2 h-auto py-4 flex-col">
+        <Button className="gap-2 h-auto py-4 flex-col" onClick={() => setShowSimulationModal(true)}>
           <Plus className="h-5 w-5" />
           Nova Simulação
         </Button>
-        <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowComparator(true)} disabled={simulations.length < 2}>
           <BarChart3 className="h-5 w-5" />
           Comparar
         </Button>
-        <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" disabled>
           <Star className="h-5 w-5" />
-          Favoritas
+          Favoritas ({favoriteSimulations.length})
         </Button>
-        <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowReport(true)} disabled={simulations.length === 0}>
           <FileText className="h-5 w-5" />
           Relatório
         </Button>
@@ -142,25 +146,29 @@ export default function ClientCockpit() {
           <CardTitle>Simulações</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>Nenhuma simulação criada ainda.</p>
-            <p className="text-sm mt-2">Clique em "Nova Simulação" para começar.</p>
-          </div>
+          {simulations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhuma simulação criada ainda.</p>
+              <p className="text-sm mt-2">Clique em "Nova Simulação" para começar.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {simulations.map((sim) => (
+                <SimulationCard key={sim.id} simulation={sim} />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Timeline / Notas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>Nenhuma nota registrada.</p>
-            <p className="text-sm mt-2">Registre objeções, preferências e alertas importantes.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <TimelineSection clientId={client.id} />
+
+      {/* Modals */}
+      <ClientFormDialog open={showEditClient} onOpenChange={setShowEditClient} client={client} />
+      <SimulationModal open={showSimulationModal} onOpenChange={setShowSimulationModal} client={client} />
+      <ScenarioComparator open={showComparator} onOpenChange={setShowComparator} simulations={simulations} selectedIds={selectedSimulations} onSelectionChange={setSelectedSimulations} />
+      <ReportGenerator open={showReport} onOpenChange={setShowReport} client={client} simulations={simulations} />
     </div>
   );
 }

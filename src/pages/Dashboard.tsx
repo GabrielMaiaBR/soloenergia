@@ -3,49 +3,20 @@ import { Input } from "@/components/ui/input";
 import { Users, FileSearch, Star, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ClientCard } from "@/components/dashboard/ClientCard";
+import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { useState } from "react";
-
-// Temporary mock data until database is connected
-const mockClients = [
-  {
-    id: "1",
-    name: "João Silva",
-    phone: "(11) 99999-1234",
-    status: "analysis" as const,
-    system_power_kwp: 8.5,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Maria Santos",
-    phone: "(11) 98888-5678",
-    status: "lead" as const,
-    system_power_kwp: 12,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    name: "Carlos Oliveira",
-    cpf: "123.456.789-00",
-    status: "closed" as const,
-    system_power_kwp: 5.2,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-const kpis = [
-  { label: "Total de Clientes", value: 3, icon: Users, color: "text-primary" },
-  { label: "Em Análise", value: 1, icon: FileSearch, color: "text-solo-warning" },
-  { label: "Favoritas", value: 2, icon: Star, color: "text-solo-success" },
-];
+import { useClients } from "@/hooks/useClients";
+import { useDashboardKPIs } from "@/hooks/useDashboardKPIs";
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showClientForm, setShowClientForm] = useState(false);
 
-  const filteredClients = mockClients.filter((client) => {
+  const { data: clients = [], isLoading } = useClients();
+  const { data: kpis } = useDashboardKPIs();
+
+  const filteredClients = clients.filter((client) => {
     const query = searchQuery.toLowerCase();
     return (
       client.name.toLowerCase().includes(query) ||
@@ -53,6 +24,12 @@ export default function Dashboard() {
       client.cpf?.includes(query)
     );
   });
+
+  const kpiData = [
+    { label: "Total de Clientes", value: kpis?.total_clients || 0, icon: Users, color: "text-primary" },
+    { label: "Em Análise", value: kpis?.proposals_in_analysis || 0, icon: FileSearch, color: "text-solo-warning" },
+    { label: "Favoritas", value: kpis?.favorite_simulations || 0, icon: Star, color: "text-solo-success" },
+  ];
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -62,7 +39,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <p className="text-muted-foreground">Visão estratégica do seu negócio solar</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setShowClientForm(true)}>
           <Plus className="h-4 w-4" />
           Novo Cliente
         </Button>
@@ -70,7 +47,7 @@ export default function Dashboard() {
 
       {/* KPIs */}
       <div className="grid gap-4 md:grid-cols-3">
-        {kpis.map((kpi) => (
+        {kpiData.map((kpi) => (
           <Card key={kpi.label} className="transition-solo hover:shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -99,7 +76,11 @@ export default function Dashboard() {
       {/* Client List */}
       <div className="space-y-4">
         <h2 className="text-lg font-medium">Clientes</h2>
-        {filteredClients.length === 0 ? (
+        {isLoading ? (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">Carregando...</p>
+          </Card>
+        ) : filteredClients.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-muted-foreground">
               {searchQuery ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado ainda"}
@@ -113,11 +94,9 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Client Form Dialog */}
+      <ClientFormDialog open={showClientForm} onOpenChange={setShowClientForm} />
     </div>
   );
-}
-
-// Helper function imported inline to avoid circular deps
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
 }
