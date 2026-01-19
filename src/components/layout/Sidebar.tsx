@@ -1,8 +1,10 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Settings, Sun, Menu, X } from "lucide-react";
+import { LayoutDashboard, Settings, Sun, Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -12,6 +14,16 @@ const navItems = [
 export function Sidebar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { signOut, user } = useAuth();
+
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error("Erro ao sair: " + error.message);
+    } else {
+      toast.success("Logout realizado com sucesso!");
+    }
+  };
 
   return (
     <>
@@ -76,8 +88,22 @@ export function Sidebar() {
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="border-t border-border p-4">
+          {/* Footer with user info and logout */}
+          <div className="border-t border-border p-4 space-y-3">
+            {user && (
+              <p className="text-xs text-muted-foreground truncate text-center">
+                {user.email}
+              </p>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
             <p className="text-xs text-muted-foreground text-center">
               v1.0.0 • Solo Smart
             </p>
