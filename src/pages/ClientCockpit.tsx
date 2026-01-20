@@ -3,13 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, TrendingUp, DollarSign, Star, FileText, Plus, BarChart3, Edit, LineChart, PieChart } from "lucide-react";
+import { ArrowLeft, Zap, TrendingUp, DollarSign, FileText, BarChart3, Edit, LineChart, PieChart } from "lucide-react";
 import { useClient } from "@/hooks/useClients";
 import { useClientSimulations } from "@/hooks/useSimulations";
 import { useSettings } from "@/hooks/useSettings";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
-import { SimulationModal } from "@/components/simulations/SimulationModal";
-import { SimulationCard } from "@/components/simulations/SimulationCard";
+import { UnifiedClientCard } from "@/components/clients/UnifiedClientCard";
+import { QuickSimulationPanel } from "@/components/simulations/QuickSimulationPanel";
 import { ScenarioComparator } from "@/components/simulations/ScenarioComparator";
 import { TariffProjectionChart } from "@/components/simulations/TariffProjectionChart";
 import { EconomyChartsTab } from "@/components/simulations/EconomyChartsTab";
@@ -26,11 +26,10 @@ export default function ClientCockpit() {
   const { data: settings } = useSettings();
 
   const [showEditClient, setShowEditClient] = useState(false);
-  const [showSimulationModal, setShowSimulationModal] = useState(false);
   const [showComparator, setShowComparator] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [selectedSimulations, setSelectedSimulations] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState("simulations");
+  const [activeTab, setActiveTab] = useState("analysis");
 
   if (clientLoading || !client) {
     return (
@@ -43,7 +42,6 @@ export default function ClientCockpit() {
   const lei14300Factor = settings?.lei_14300_factor || 0.85;
   const tariff = client.energy_tariff || settings?.default_tariff || 0.85;
   const monthlyEconomy = calculateRealEconomy(client.monthly_generation_kwh || 0, tariff, lei14300Factor);
-  const favoriteSimulations = simulations.filter((s) => s.is_favorite);
   const averageTariffIncrease = simulations.length > 0 
     ? simulations.reduce((acc, s) => acc + (s.tariff_increase_rate || 8), 0) / simulations.length 
     : 8;
@@ -112,62 +110,49 @@ export default function ClientCockpit() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Tarifa</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              R$ {tariff.toFixed(2)}/kWh
-            </div>
+            <div className="text-2xl font-bold">R$ {tariff.toFixed(2)}/kWh</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Actions */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Button className="gap-2 h-auto py-4 flex-col" onClick={() => setShowSimulationModal(true)}>
-          <Plus className="h-5 w-5" />
-          Nova Simulação
-        </Button>
-        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowComparator(true)} disabled={simulations.length < 2}>
-          <BarChart3 className="h-5 w-5" />
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" className="gap-2" onClick={() => setShowComparator(true)} disabled={simulations.length < 2}>
+          <BarChart3 className="h-4 w-4" />
           Comparar ({simulations.length})
         </Button>
-        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" disabled>
-          <Star className="h-5 w-5" />
-          Favoritas ({favoriteSimulations.length})
-        </Button>
-        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => setShowReport(true)} disabled={simulations.length === 0}>
-          <FileText className="h-5 w-5" />
+        <Button variant="outline" className="gap-2" onClick={() => setShowReport(true)} disabled={simulations.length === 0}>
+          <FileText className="h-4 w-4" />
           Relatório
         </Button>
       </div>
 
-      {/* Tabs for different views */}
+      {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-lg">
-          <TabsTrigger value="simulations">Simulações</TabsTrigger>
+        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <TabsTrigger value="analysis">Análise</TabsTrigger>
+          <TabsTrigger value="simulate">Simular</TabsTrigger>
           <TabsTrigger value="charts">Gráficos</TabsTrigger>
           <TabsTrigger value="projection">Projeção</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="simulations" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Simulações</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {simulations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Nenhuma simulação criada ainda.</p>
-                  <p className="text-sm mt-2">Clique em "Nova Simulação" para começar.</p>
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {simulations.map((sim) => (
-                    <SimulationCard key={sim.id} simulation={sim} client={client} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="analysis" className="mt-6">
+          <UnifiedClientCard
+            client={client}
+            simulations={simulations}
+            monthlyEconomy={monthlyEconomy}
+            tariff={tariff}
+            onNewSimulation={() => setActiveTab("simulate")}
+          />
+        </TabsContent>
+
+        <TabsContent value="simulate" className="mt-6">
+          <QuickSimulationPanel
+            client={client}
+            monthlyEconomy={monthlyEconomy}
+            onSimulationCreated={() => setActiveTab("analysis")}
+          />
         </TabsContent>
 
         <TabsContent value="charts" className="mt-6">
@@ -212,7 +197,6 @@ export default function ClientCockpit() {
 
       {/* Modals */}
       <ClientFormDialog open={showEditClient} onOpenChange={setShowEditClient} client={client} />
-      <SimulationModal open={showSimulationModal} onOpenChange={setShowSimulationModal} client={client} />
       <ScenarioComparator open={showComparator} onOpenChange={setShowComparator} simulations={simulations} selectedIds={selectedSimulations} onSelectionChange={setSelectedSimulations} />
       <ReportGenerator open={showReport} onOpenChange={setShowReport} client={client} simulations={simulations} />
     </div>
