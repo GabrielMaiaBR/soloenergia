@@ -32,7 +32,13 @@ export function detectMonthlyRate(
     
     // f'(i) derivative
     const numerator = (1 - power) / rate - installments * power / onePlusRate;
-    const fPrime = -installmentValue * numerator / rate;
+    // NOTE: f' must be positive (as rate increases, PV decreases => f increases)
+    const fPrime = installmentValue * numerator / rate;
+
+    // Avoid division by ~0 which can explode Newton steps
+    if (!isFinite(fPrime) || Math.abs(fPrime) < 1e-12) {
+      break;
+    }
     
     // Newton-Raphson step
     const newRate = rate - f / fPrime;
