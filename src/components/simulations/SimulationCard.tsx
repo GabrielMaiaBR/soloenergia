@@ -8,6 +8,7 @@ import { useToggleFavorite, useDeleteSimulation } from "@/hooks/useSimulations";
 import { formatCurrency, formatPercent } from "@/lib/financial";
 import { cn } from "@/lib/utils";
 import { SimulationEditModal } from "./SimulationEditModal";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 interface SimulationCardProps {
   simulation: Simulation;
@@ -52,6 +53,7 @@ export function SimulationCard({ simulation, client, isSelected, onSelect }: Sim
   const toggleFavorite = useToggleFavorite();
   const deleteSimulation = useDeleteSimulation();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -60,9 +62,12 @@ export function SimulationCard({ simulation, client, isSelected, onSelect }: Sim
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Remover esta simulação?")) {
-      deleteSimulation.mutate({ id: simulation.id, clientId: simulation.client_id });
-    }
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    deleteSimulation.mutate({ id: simulation.id, clientId: simulation.client_id });
+    setShowDeleteDialog(false);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -76,10 +81,10 @@ export function SimulationCard({ simulation, client, isSelected, onSelect }: Sim
   const formatPayback = (months?: number) => {
     if (months === undefined || months === null) return "-";
     if (months === Infinity) return "N/A";
-    
+
     const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
-    
+
     if (years === 0) {
       return `${months} ${months === 1 ? "mês" : "meses"}`;
     } else if (remainingMonths === 0) {
@@ -215,6 +220,16 @@ export function SimulationCard({ simulation, client, isSelected, onSelect }: Sim
           client={client}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        title="Excluir Simulação"
+        itemName={simulation.name || `Simulação v${simulation.version}`}
+        isLoading={deleteSimulation.isPending}
+      />
     </>
   );
 }

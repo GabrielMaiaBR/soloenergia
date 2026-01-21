@@ -23,6 +23,7 @@ import { useClientNotes, useCreateNote, useDeleteNote } from "@/hooks/useTimelin
 import type { TimelineNote } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 interface TimelineSectionProps {
   clientId: string;
@@ -66,6 +67,7 @@ export function TimelineSection({ clientId }: TimelineSectionProps) {
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<NoteType>("note");
   const [isAdding, setIsAdding] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<TimelineNote | null>(null);
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
@@ -81,10 +83,10 @@ export function TimelineSection({ clientId }: TimelineSectionProps) {
     setNoteType("note");
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (confirm("Remover esta nota?")) {
-      await deleteNote.mutateAsync({ id: noteId, clientId });
-    }
+  const handleDeleteNote = async () => {
+    if (!noteToDelete) return;
+    await deleteNote.mutateAsync({ id: noteToDelete.id, clientId });
+    setNoteToDelete(null);
   };
 
   return (
@@ -172,7 +174,7 @@ export function TimelineSection({ clientId }: TimelineSectionProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
-                    onClick={() => handleDeleteNote(note.id)}
+                    onClick={() => setNoteToDelete(note)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -182,6 +184,16 @@ export function TimelineSection({ clientId }: TimelineSectionProps) {
           </div>
         )}
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={!!noteToDelete}
+        onOpenChange={(open) => !open && setNoteToDelete(null)}
+        onConfirm={handleDeleteNote}
+        title="Excluir Nota"
+        description={`Tem certeza que deseja excluir esta ${noteToDelete ? noteTypeConfig[noteToDelete.type].label.toLowerCase() : 'nota'}?`}
+        isLoading={deleteNote.isPending}
+      />
     </Card>
   );
 }

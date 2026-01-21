@@ -18,7 +18,11 @@ export interface Client {
   phone?: string;
   email?: string;
   status: ClientStatus;
+  // Location (for HSP calculation)
+  city?: string;
+  state_code?: string;
   // Project data
+  monthly_consumption_kwh?: number;  // Consumo mensal (input)
   system_power_kwp?: number;
   monthly_generation_kwh?: number;
   energy_tariff?: number;

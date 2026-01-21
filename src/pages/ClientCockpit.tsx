@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, TrendingUp, DollarSign, FileText, BarChart3, Edit, LineChart, PieChart } from "lucide-react";
+import { ArrowLeft, Zap, TrendingUp, DollarSign, FileText, BarChart3, Edit, LineChart, PieChart, History, MessageSquare } from "lucide-react";
 import { useClient } from "@/hooks/useClients";
 import { useClientSimulations } from "@/hooks/useSimulations";
 import { useSettings } from "@/hooks/useSettings";
@@ -15,6 +15,8 @@ import { TariffProjectionChart } from "@/components/simulations/TariffProjection
 import { EconomyChartsTab } from "@/components/simulations/EconomyChartsTab";
 import { TimelineSection } from "@/components/timeline/TimelineSection";
 import { ReportGenerator } from "@/components/reports/ReportGenerator";
+import { VersionHistoryModal } from "@/components/simulations/VersionHistoryModal";
+import { SalesArgumentsPanel } from "@/components/sales/SalesArgumentsPanel";
 import { formatCurrency, calculateRealEconomy } from "@/lib/financial";
 
 export default function ClientCockpit() {
@@ -28,6 +30,8 @@ export default function ClientCockpit() {
   const [showEditClient, setShowEditClient] = useState(false);
   const [showComparator, setShowComparator] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showSalesArguments, setShowSalesArguments] = useState(false);
   const [selectedSimulations, setSelectedSimulations] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("analysis");
 
@@ -42,8 +46,8 @@ export default function ClientCockpit() {
   const lei14300Factor = settings?.lei_14300_factor || 0.85;
   const tariff = client.energy_tariff || settings?.default_tariff || 0.85;
   const monthlyEconomy = calculateRealEconomy(client.monthly_generation_kwh || 0, tariff, lei14300Factor);
-  const averageTariffIncrease = simulations.length > 0 
-    ? simulations.reduce((acc, s) => acc + (s.tariff_increase_rate || 8), 0) / simulations.length 
+  const averageTariffIncrease = simulations.length > 0
+    ? simulations.reduce((acc, s) => acc + (s.tariff_increase_rate || 8), 0) / simulations.length
     : 8;
 
   return (
@@ -117,6 +121,10 @@ export default function ClientCockpit() {
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-2">
+        <Button variant="outline" className="gap-2" onClick={() => setShowVersionHistory(true)} disabled={simulations.length === 0}>
+          <History className="h-4 w-4" />
+          Histórico
+        </Button>
         <Button variant="outline" className="gap-2" onClick={() => setShowComparator(true)} disabled={simulations.length < 2}>
           <BarChart3 className="h-4 w-4" />
           Comparar ({simulations.length})
@@ -124,6 +132,10 @@ export default function ClientCockpit() {
         <Button variant="outline" className="gap-2" onClick={() => setShowReport(true)} disabled={simulations.length === 0}>
           <FileText className="h-4 w-4" />
           Relatório
+        </Button>
+        <Button variant="outline" className="gap-2" onClick={() => setShowSalesArguments(true)}>
+          <MessageSquare className="h-4 w-4" />
+          Argumentos
         </Button>
       </div>
 
@@ -156,10 +168,10 @@ export default function ClientCockpit() {
         </TabsContent>
 
         <TabsContent value="charts" className="mt-6">
-          <EconomyChartsTab 
-            simulations={simulations} 
-            client={client} 
-            monthlyEconomy={monthlyEconomy} 
+          <EconomyChartsTab
+            simulations={simulations}
+            client={client}
+            monthlyEconomy={monthlyEconomy}
           />
         </TabsContent>
 
@@ -199,6 +211,8 @@ export default function ClientCockpit() {
       <ClientFormDialog open={showEditClient} onOpenChange={setShowEditClient} client={client} />
       <ScenarioComparator open={showComparator} onOpenChange={setShowComparator} simulations={simulations} selectedIds={selectedSimulations} onSelectionChange={setSelectedSimulations} />
       <ReportGenerator open={showReport} onOpenChange={setShowReport} client={client} simulations={simulations} />
+      <VersionHistoryModal open={showVersionHistory} onOpenChange={setShowVersionHistory} simulations={simulations} />
+      <SalesArgumentsPanel open={showSalesArguments} onOpenChange={setShowSalesArguments} />
     </div>
   );
 }

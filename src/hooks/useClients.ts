@@ -12,6 +12,9 @@ function transformClient(row: any): Client {
     phone: row.phone,
     email: row.email,
     status: row.status as ClientStatus,
+    city: row.city,
+    state_code: row.state_code,
+    monthly_consumption_kwh: row.monthly_consumption_kwh ? Number(row.monthly_consumption_kwh) : undefined,
     system_power_kwp: row.system_power_kwp ? Number(row.system_power_kwp) : undefined,
     monthly_generation_kwh: row.monthly_generation_kwh ? Number(row.monthly_generation_kwh) : undefined,
     energy_tariff: row.energy_tariff ? Number(row.energy_tariff) : undefined,
@@ -43,7 +46,7 @@ export function useClient(id: string | undefined) {
     queryKey: ["clients", id],
     queryFn: async () => {
       if (!id) throw new Error("Client ID required");
-      
+
       const { data, error } = await supabase
         .from("clients")
         .select("*")
@@ -71,6 +74,9 @@ export function useCreateClient() {
           phone: client.phone,
           email: client.email,
           status: client.status,
+          city: client.city,
+          state_code: client.state_code,
+          monthly_consumption_kwh: client.monthly_consumption_kwh,
           system_power_kwp: client.system_power_kwp,
           monthly_generation_kwh: client.monthly_generation_kwh,
           energy_tariff: client.energy_tariff,
@@ -106,6 +112,9 @@ export function useUpdateClient() {
           phone: updates.phone,
           email: updates.email,
           status: updates.status,
+          city: updates.city,
+          state_code: updates.state_code,
+          monthly_consumption_kwh: updates.monthly_consumption_kwh,
           system_power_kwp: updates.system_power_kwp,
           monthly_generation_kwh: updates.monthly_generation_kwh,
           energy_tariff: updates.energy_tariff,

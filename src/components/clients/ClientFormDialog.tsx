@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Calculator, Zap } from "lucide-react";
 import type { Client, ClientStatus } from "@/types";
 import { useCreateClient, useUpdateClient } from "@/hooks/useClients";
 import { useSettings } from "@/hooks/useSettings";
+import { formatCPF, formatPhone, unformatCPF, unformatPhone } from "@/lib/masks";
+import {
+  calculateRequiredPower,
+  calculateExpectedGeneration,
+  getAllStates,
+  getHSPByState,
+  DEFAULT_HSP
+} from "@/lib/solar-sizing";
 
 interface ClientFormDialogProps {
   open: boolean;
@@ -33,6 +43,8 @@ const statusOptions: { value: ClientStatus; label: string }[] = [
   { value: "lost", label: "Perdido" },
 ];
 
+const states = getAllStates();
+
 export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialogProps) {
   const { data: settings } = useSettings();
   const createClient = useCreateClient();
@@ -40,25 +52,53 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
 
   const [formData, setFormData] = useState({
     name: client?.name || "",
-    cpf: client?.cpf || "",
-    phone: client?.phone || "",
+    cpf: client?.cpf ? formatCPF(client.cpf) : "",
+    phone: client?.phone ? formatPhone(client.phone) : "",
     email: client?.email || "",
     status: client?.status || ("lead" as ClientStatus),
+    state_code: client?.state_code || "",
+    city: client?.city || "",
+    monthly_consumption_kwh: client?.monthly_consumption_kwh?.toString() || "",
     system_power_kwp: client?.system_power_kwp?.toString() || "",
     monthly_generation_kwh: client?.monthly_generation_kwh?.toString() || "",
     energy_tariff: client?.energy_tariff?.toString() || settings?.default_tariff?.toString() || "0.85",
     notes: client?.notes || "",
   });
 
+  // Auto-calculate power and generation based on consumption
+  const sizing = useMemo(() => {
+    const consumption = parseFloat(formData.monthly_consumption_kwh);
+    if (!consumption || consumption <= 0) return null;
+
+    const hsp = formData.state_code ? getHSPByState(formData.state_code) : DEFAULT_HSP;
+    const power = calculateRequiredPower(consumption, hsp);
+    const generation = calculateExpectedGeneration(power, hsp);
+
+    return { power, generation, hsp };
+  }, [formData.monthly_consumption_kwh, formData.state_code]);
+
+  const handleApplySizing = () => {
+    if (sizing) {
+      setFormData(prev => ({
+        ...prev,
+        system_power_kwp: sizing.power.toString(),
+        monthly_generation_kwh: sizing.generation.toString(),
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const clientData = {
       name: formData.name,
-      cpf: formData.cpf || undefined,
-      phone: formData.phone || undefined,
+      cpf: formData.cpf ? unformatCPF(formData.cpf) : undefined,
+      phone: formData.phone ? unformatPhone(formData.phone) : undefined,
       email: formData.email || undefined,
       status: formData.status,
+      state_code: formData.state_code || undefined,
+      city: formData.city || undefined,
+      monthly_consumption_kwh: formData.monthly_consumption_kwh ? parseFloat(formData.monthly_consumption_kwh) : undefined,
       system_power_kwp: formData.system_power_kwp ? parseFloat(formData.system_power_kwp) : undefined,
       monthly_generation_kwh: formData.monthly_generation_kwh
         ? parseFloat(formData.monthly_generation_kwh)
@@ -105,8 +145,9 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
                 <Input
                   id="cpf"
                   value={formData.cpf}
-                  onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, cpf: formatCPF(e.target.value) })}
                   placeholder="000.000.000-00"
+                  maxLength={14}
                 />
               </div>
               <div className="space-y-2">
@@ -114,8 +155,9 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
                 <Input
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
                   placeholder="(00) 00000-0000"
+                  maxLength={15}
                 />
               </div>
             </div>
@@ -156,6 +198,78 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
           <div className="border-t pt-4 space-y-4">
             <h4 className="text-sm font-medium text-muted-foreground">Dados do Projeto</h4>
 
+            {/* Location and Consumption */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="state">Estado</Label>
+                <Select
+                  value={formData.state_code}
+                  onValueChange={(value) => setFormData({ ...formData, state_code: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {states.map((state) => (
+                      <SelectItem key={state.code} value={state.code}>
+                        {state.code} - {state.hsp}h
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="Cidade do cliente"
+                />
+              </div>
+            </div>
+
+            {/* Consumption with auto-sizing */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="consumption">Consumo Mensal (kWh)</Label>
+                {sizing && (
+                  <Badge variant="outline" className="gap-1">
+                    <Calculator className="h-3 w-3" />
+                    HSP: {sizing.hsp}h
+                  </Badge>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  id="consumption"
+                  type="number"
+                  value={formData.monthly_consumption_kwh}
+                  onChange={(e) => setFormData({ ...formData, monthly_consumption_kwh: e.target.value })}
+                  placeholder="Ex: 500"
+                  className="flex-1"
+                />
+                {sizing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleApplySizing}
+                    className="gap-1 whitespace-nowrap"
+                  >
+                    <Zap className="h-3 w-3" />
+                    {sizing.power} kWp
+                  </Button>
+                )}
+              </div>
+              {sizing && (
+                <p className="text-xs text-muted-foreground">
+                  Dimensionamento sugerido: {sizing.power} kWp → {sizing.generation} kWh/mês
+                </p>
+              )}
+            </div>
+
+            {/* Power, Generation, Tariff */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="power">Potência (kWp)</Label>
