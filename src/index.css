@@ -4,13 +4,14 @@
 
 /* Solo Smart Design System
    Emotional Thesis: "Uma prancheta de engenharia financeira moderna: clara, honesta e silenciosamente poderosa."
+   Technical precision tool for solar sales with unquestionable numbers.
    All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Light theme (não usado, app é dark-first) */
-    --background: 210 25% 97%;
+    /* Light theme - Technical precision palette */
+    --background: 210 20% 98%;
     --foreground: 210 50% 10%;
 
     --card: 0 0% 100%;
@@ -19,107 +20,121 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 50% 10%;
 
-    --primary: 210 50% 24%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Deep technical blue #0F2A44 */
+    --primary: 210 65% 16%;
+    --primary-foreground: 210 20% 98%;
 
-    --secondary: 210 20% 93%;
-    --secondary-foreground: 210 50% 24%;
+    --secondary: 210 15% 93%;
+    --secondary-foreground: 210 50% 16%;
 
-    --muted: 210 20% 93%;
-    --muted-foreground: 210 15% 45%;
+    --muted: 210 15% 93%;
+    --muted-foreground: 210 10% 45%;
 
-    --accent: 210 20% 93%;
-    --accent-foreground: 210 50% 24%;
+    --accent: 210 15% 93%;
+    --accent-foreground: 210 50% 16%;
 
-    --destructive: 4 70% 50%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
-    --ring: 210 50% 24%;
+    --border: 210 15% 88%;
+    --input: 210 15% 88%;
+    --ring: 210 65% 16%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    /* Solo Smart semantic colors */
-    --solo-trust: 210 50% 24%;
-    --solo-trust-foreground: 210 40% 98%;
-    --solo-warning: 45 90% 62%;
-    --solo-warning-foreground: 45 80% 15%;
-    --solo-success: 145 50% 40%;
+    /* Solo Smart semantic colors - Technical palette */
+    --solo-trust: 210 65% 16%;
+    --solo-trust-foreground: 210 20% 98%;
+    --solo-warning: 45 93% 47%;
+    --solo-warning-foreground: 45 93% 10%;
+    --solo-success: 142 71% 29%;
     --solo-success-foreground: 0 0% 100%;
-    --solo-danger: 4 70% 50%;
+    --solo-danger: 0 72% 51%;
     --solo-danger-foreground: 0 0% 100%;
 
     /* Status colors */
-    --status-lead: 210 50% 50%;
-    --status-analysis: 45 90% 62%;
-    --status-closed: 145 50% 40%;
-    --status-lost: 4 70% 50%;
+    --status-lead: 210 60% 50%;
+    --status-analysis: 45 93% 47%;
+    --status-closed: 142 71% 29%;
+    --status-lost: 0 72% 51%;
 
-    --sidebar-background: 210 25% 97%;
-    --sidebar-foreground: 210 15% 30%;
-    --sidebar-primary: 210 50% 24%;
+    /* Chart colors */
+    --chart-positive: 142 71% 29%;
+    --chart-negative: 0 72% 51%;
+    --chart-neutral: 210 10% 45%;
+    --chart-highlight: 210 65% 50%;
+
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 210 10% 30%;
+    --sidebar-primary: 210 65% 16%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 93%;
-    --sidebar-accent-foreground: 210 50% 24%;
-    --sidebar-border: 210 20% 88%;
-    --sidebar-ring: 210 50% 50%;
+    --sidebar-accent: 210 15% 93%;
+    --sidebar-accent-foreground: 210 50% 16%;
+    --sidebar-border: 210 15% 88%;
+    --sidebar-ring: 210 65% 50%;
   }
 
   .dark {
-    /* Dark theme principal - Azul profundo #1E3A5F base */
-    --background: 210 52% 8%;
-    --foreground: 210 20% 95%;
+    /* Dark theme - Technical precision palette */
+    --background: 210 50% 6%;
+    --foreground: 210 15% 95%;
 
-    --card: 210 45% 12%;
-    --card-foreground: 210 20% 95%;
+    --card: 210 45% 10%;
+    --card-foreground: 210 15% 95%;
 
-    --popover: 210 45% 10%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 210 45% 8%;
+    --popover-foreground: 210 15% 95%;
 
-    --primary: 210 50% 55%;
-    --primary-foreground: 210 52% 8%;
+    /* Primary: Lighter technical blue for dark mode */
+    --primary: 210 60% 55%;
+    --primary-foreground: 210 50% 6%;
 
-    --secondary: 210 35% 18%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 210 35% 16%;
+    --secondary-foreground: 210 15% 90%;
 
-    --muted: 210 30% 16%;
-    --muted-foreground: 210 15% 60%;
+    --muted: 210 30% 14%;
+    --muted-foreground: 210 10% 55%;
 
-    --accent: 210 35% 20%;
-    --accent-foreground: 210 20% 95%;
+    --accent: 210 35% 18%;
+    --accent-foreground: 210 15% 95%;
 
-    --destructive: 4 70% 45%;
+    --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 30% 18%;
-    --input: 210 30% 20%;
-    --ring: 210 50% 55%;
+    --border: 210 30% 16%;
+    --input: 210 30% 18%;
+    --ring: 210 60% 55%;
 
     /* Solo Smart semantic colors - Dark */
-    --solo-trust: 210 50% 55%;
-    --solo-trust-foreground: 210 52% 8%;
-    --solo-warning: 45 90% 62%;
-    --solo-warning-foreground: 45 80% 10%;
-    --solo-success: 145 55% 45%;
-    --solo-success-foreground: 145 60% 8%;
-    --solo-danger: 4 65% 55%;
+    --solo-trust: 210 60% 55%;
+    --solo-trust-foreground: 210 50% 6%;
+    --solo-warning: 45 90% 55%;
+    --solo-warning-foreground: 45 90% 10%;
+    --solo-success: 142 55% 42%;
+    --solo-success-foreground: 142 60% 8%;
+    --solo-danger: 0 60% 55%;
     --solo-danger-foreground: 0 0% 100%;
 
     /* Status colors - Dark */
     --status-lead: 210 60% 55%;
     --status-analysis: 45 85% 55%;
-    --status-closed: 145 55% 45%;
-    --status-lost: 4 65% 55%;
+    --status-closed: 142 55% 42%;
+    --status-lost: 0 60% 55%;
 
-    --sidebar-background: 210 45% 10%;
-    --sidebar-foreground: 210 15% 85%;
-    --sidebar-primary: 210 50% 55%;
-    --sidebar-primary-foreground: 210 52% 8%;
-    --sidebar-accent: 210 35% 16%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 210 30% 18%;
-    --sidebar-ring: 210 50% 55%;
+    /* Chart colors - Dark */
+    --chart-positive: 142 55% 45%;
+    --chart-negative: 0 60% 55%;
+    --chart-neutral: 210 10% 55%;
+    --chart-highlight: 210 60% 55%;
+
+    --sidebar-background: 210 45% 8%;
+    --sidebar-foreground: 210 10% 85%;
+    --sidebar-primary: 210 60% 55%;
+    --sidebar-primary-foreground: 210 50% 6%;
+    --sidebar-accent: 210 35% 14%;
+    --sidebar-accent-foreground: 210 15% 90%;
+    --sidebar-border: 210 30% 16%;
+    --sidebar-ring: 210 60% 55%;
   }
 }
 
@@ -137,7 +152,7 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Typography scale - Sans-serif técnica */
+  /* Typography scale - Sans-serif técnica (Inter, IBM Plex Sans) */
   h1 {
     @apply text-3xl font-semibold tracking-tight leading-tight;
   }
@@ -169,6 +184,14 @@
     @apply transition-all duration-300 ease-out;
   }
 
+  /* Technical grid pattern for backgrounds */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
   /* Scrollbar styling */
   .scrollbar-solo {
     scrollbar-width: thin;
@@ -191,5 +214,22 @@
 
   .scrollbar-solo::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--muted-foreground));
+  }
+
+  /* Animate chart growth */
+  .animate-chart-grow {
+    animation: chartGrow 0.8s ease-out forwards;
+  }
+
+  @keyframes chartGrow {
+    from {
+      opacity: 0;
+      transform: scaleY(0);
+      transform-origin: bottom;
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+    }
   }
 }
