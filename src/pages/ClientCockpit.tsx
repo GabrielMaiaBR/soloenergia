@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, TrendingUp, DollarSign, FileText, BarChart3, Edit, LineChart, History, MessageSquare, Settings2, FileSpreadsheet, Table2 } from "lucide-react";
+import { ArrowLeft, Zap, TrendingUp, DollarSign, FileText, BarChart3, Edit, LineChart, History, MessageSquare, Settings2, FileSpreadsheet, Table2, Phone } from "lucide-react";
 import { useClient } from "@/hooks/useClients";
 import { useClientSimulations } from "@/hooks/useSimulations";
 import { useSettings } from "@/hooks/useSettings";
@@ -23,6 +23,7 @@ import { FinancialProjectionTable } from "@/components/charts/FinancialProjectio
 import { TechnicalPremisesPanel } from "@/components/charts/TechnicalPremisesPanel";
 import { ProposalKPIs } from "@/components/dashboard/ProposalKPIs";
 import { formatCurrency, calculateRealEconomy, calculateLCOE, calculatePayback } from "@/lib/financial";
+import { openWhatsApp, generateProposalMessage } from "@/lib/whatsapp";
 
 export default function ClientCockpit() {
   const { id } = useParams();
@@ -39,7 +40,7 @@ export default function ClientCockpit() {
   const [showSalesArguments, setShowSalesArguments] = useState(false);
   const [selectedSimulations, setSelectedSimulations] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("proposal");
-  
+
   // Technical premises state
   const [premises, setPremises] = useState({
     degradationRate: 0.5,
@@ -49,43 +50,37 @@ export default function ClientCockpit() {
     lei14300Factor: 0.85,
   });
 
-  if (clientLoading || !client) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Carregando...</p>
-      </div>
-    );
-  }
-
+  // Calculate values - using optional chaining for when client is loading
   const lei14300Factor = settings?.lei_14300_factor || premises.lei14300Factor;
-  const tariff = client.energy_tariff || settings?.default_tariff || 0.85;
-  const monthlyEconomy = calculateRealEconomy(client.monthly_generation_kwh || 0, tariff, lei14300Factor);
-  
+  const tariff = client?.energy_tariff || settings?.default_tariff || 0.85;
+  const monthlyEconomy = calculateRealEconomy(client?.monthly_generation_kwh || 0, tariff, lei14300Factor);
+
   // Get the favorite or first simulation for proposal display
   const primarySimulation = simulations.find(s => s.is_favorite) || simulations[0];
-  
+
   // Calculate key metrics
   const systemValue = primarySimulation?.system_value || 0;
   const monthlyInstallment = primarySimulation?.installment_value || 0;
   const installments = primarySimulation?.installments || 0;
   const totalPaid = monthlyInstallment * installments;
-  
+
   // Calculate LCOE
   const lcoe = calculateLCOE(
     systemValue,
-    client.monthly_generation_kwh || 0,
+    client?.monthly_generation_kwh || 0,
     25
   );
-  
+
   // Calculate payback with tariff increase
   const paybackResult = calculatePayback(
     totalPaid > 0 ? totalPaid : systemValue,
     monthlyEconomy,
     premises.tariffIncreaseRate
   );
-  
-  // Calculate 25-year accumulated savings
+
+  // Calculate 25-year accumulated savings - MUST be before early return
   const accumulatedSavings25Years = useMemo(() => {
+    if (!client) return 0;
     let accumulated = 0;
     let currentEconomy = monthlyEconomy * 12;
     for (let year = 0; year < 25; year++) {
@@ -93,16 +88,17 @@ export default function ClientCockpit() {
       currentEconomy *= (1 + premises.tariffIncreaseRate / 100);
     }
     return accumulated;
-  }, [monthlyEconomy, premises.tariffIncreaseRate]);
-  
-  // Calculate crossover year (when cumulative savings > cumulative cost)
+  }, [client, monthlyEconomy, premises.tariffIncreaseRate]);
+
+  // Calculate crossover year (when cumulative savings > cumulative cost) - MUST be before early return
   const crossoverYear = useMemo(() => {
+    if (!client) return 1;
     let accSavings = 0;
     let accCost = 0;
     let currentEconomy = monthlyEconomy * 12;
     const annualInstallment = monthlyInstallment * 12;
     const financingYears = Math.ceil(installments / 12);
-    
+
     for (let year = 1; year <= 25; year++) {
       accSavings += currentEconomy;
       if (year <= financingYears) {
@@ -114,10 +110,19 @@ export default function ClientCockpit() {
       currentEconomy *= (1 + premises.tariffIncreaseRate / 100);
     }
     return Math.ceil(installments / 12) + 1;
-  }, [monthlyEconomy, monthlyInstallment, installments, premises.tariffIncreaseRate]);
+  }, [client, monthlyEconomy, monthlyInstallment, installments, premises.tariffIncreaseRate]);
 
   // Minimum bill with solar (availability cost ~R$50-100)
   const minBillWithSolar = 80;
+
+  // Early return for loading state - AFTER all hooks
+  if (clientLoading || !client) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -205,6 +210,25 @@ export default function ClientCockpit() {
         <Button variant="outline" className="gap-2" onClick={() => setShowSalesArguments(true)}>
           <MessageSquare className="h-4 w-4" />
           Argumentos
+        </Button>
+        <Button
+          variant="default"
+          className="gap-2 bg-[#25D366] hover:bg-[#128C7E]"
+          onClick={() => {
+            const message = generateProposalMessage({
+              clientName: client.name,
+              systemPower: client.system_power_kwp || 0,
+              monthlyGeneration: client.monthly_generation_kwh || 0,
+              systemValue: systemValue,
+              monthlyEconomy: monthlyEconomy,
+              paybackYears: paybackResult.years === Infinity ? 0 : paybackResult.years,
+              companyName: settings?.company_name,
+            });
+            openWhatsApp(settings?.whatsapp_number, message);
+          }}
+        >
+          <Phone className="h-4 w-4" />
+          WhatsApp
         </Button>
       </div>
 
@@ -331,7 +355,7 @@ export default function ClientCockpit() {
                 degradationRate={premises.degradationRate}
                 maintenanceCostPercent={premises.maintenanceCostPercent}
               />
-              
+
               <TechnicalPremisesPanel
                 {...premises}
                 onUpdate={(updates) => setPremises(prev => ({ ...prev, ...updates }))}
@@ -366,7 +390,7 @@ export default function ClientCockpit() {
               </CardContent>
             </Card>
           )}
-          
+
           <EconomyChartsTab
             simulations={simulations}
             client={client}

@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Settings, Sun, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, Sun, Menu, X, LogOut, Calculator, Kanban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { toast } from "sonner";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/calculator", icon: Calculator, label: "Calculadora" },
+  { to: "/pipeline", icon: Kanban, label: "Pipeline" },
   { to: "/settings", icon: Settings, label: "Configurações" },
 ];
 

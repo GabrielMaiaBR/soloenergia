@@ -136,6 +136,141 @@
     --sidebar-border: 210 30% 16%;
     --sidebar-ring: 210 60% 55%;
   }
+
+  /* ============================================
+     PALETA SOLO ENERGIA - LARANJA SOLAR
+     Baseada na identidade visual oficial
+     ============================================ */
+
+  /* Solar Light Theme */
+  .theme-solar:not(.dark) {
+    /* Cores de fundo e texto */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    /* Primary: Laranja Solar #E55A2B */
+    --primary: 16 79% 53%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 13%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 13%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 16 79% 53%;
+
+    --radius: 0.625rem;
+
+    /* Solo Smart semantic colors - Solar Light */
+    --solo-trust: 16 79% 53%;
+    --solo-trust-foreground: 0 0% 98%;
+    --solo-warning: 45 93% 47%;
+    --solo-warning-foreground: 45 93% 10%;
+    --solo-success: 142 71% 29%;
+    --solo-success-foreground: 0 0% 100%;
+    --solo-danger: 0 72% 51%;
+    --solo-danger-foreground: 0 0% 100%;
+
+    /* Status colors - Solar */
+    --status-lead: 210 60% 50%;
+    --status-analysis: 45 93% 47%;
+    --status-closed: 142 71% 29%;
+    --status-lost: 0 72% 51%;
+
+    /* Chart colors - Solar palette */
+    --chart-positive: 142 71% 29%;
+    --chart-negative: 0 72% 51%;
+    --chart-neutral: 240 4% 46%;
+    --chart-highlight: 16 79% 53%;
+
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 240 10% 10%;
+    --sidebar-primary: 240 6% 13%;
+    --sidebar-primary-foreground: 0 0% 99%;
+    --sidebar-accent: 240 5% 96%;
+    --sidebar-accent-foreground: 240 6% 13%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 16 79% 53%;
+  }
+
+  /* Solar Dark Theme */
+  .theme-solar.dark {
+    /* Cores de fundo e texto */
+    --background: 240 10% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 6% 13%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 6% 13%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary: Laranja Solar (mesmo em dark) */
+    --primary: 16 79% 53%;
+    --primary-foreground: 240 6% 13%;
+
+    --secondary: 240 4% 17%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 4% 17%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 240 4% 17%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 63% 70%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 18%;
+    --ring: 16 79% 53%;
+
+    /* Solo Smart semantic colors - Solar Dark */
+    --solo-trust: 16 79% 53%;
+    --solo-trust-foreground: 240 6% 13%;
+    --solo-warning: 45 90% 55%;
+    --solo-warning-foreground: 45 90% 10%;
+    --solo-success: 142 55% 45%;
+    --solo-success-foreground: 142 60% 8%;
+    --solo-danger: 0 63% 70%;
+    --solo-danger-foreground: 0 0% 100%;
+
+    /* Status colors - Solar Dark */
+    --status-lead: 210 60% 55%;
+    --status-analysis: 45 85% 55%;
+    --status-closed: 142 55% 45%;
+    --status-lost: 0 63% 70%;
+
+    /* Chart colors - Solar Dark */
+    --chart-positive: 142 55% 45%;
+    --chart-negative: 0 63% 70%;
+    --chart-neutral: 240 5% 55%;
+    --chart-highlight: 16 79% 53%;
+
+    --sidebar-background: 240 6% 13%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 260 50% 60%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4% 17%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 16 79% 53%;
+  }
 }
 
 @layer base {

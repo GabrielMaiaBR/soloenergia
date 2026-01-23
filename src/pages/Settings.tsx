@@ -15,7 +15,7 @@ export default function Settings() {
   const { data: settings, isLoading } = useSettings();
   const { data: clients = [] } = useClients();
   const updateSettings = useUpdateSettings();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, palette, setPalette } = useTheme();
 
   const handleSave = async (updates: Partial<typeof settings>) => {
     if (!settings) return;
@@ -48,7 +48,8 @@ export default function Settings() {
       {/* Appearance */}
       <Card>
         <CardHeader><CardTitle>Aparência</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Theme Mode */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Modo Escuro</Label>
@@ -61,6 +62,57 @@ export default function Settings() {
                 onCheckedChange={toggleTheme}
               />
               <Moon className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+
+          {/* Palette Selector */}
+          <div className="space-y-3">
+            <div className="space-y-0.5">
+              <Label>Paleta de Cores</Label>
+              <p className="text-xs text-muted-foreground">Escolha o tema visual do aplicativo</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Classic Palette */}
+              <div
+                onClick={() => setPalette("classic")}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${palette === "classic"
+                  ? "border-primary ring-2 ring-primary/30"
+                  : "border-border hover:border-primary/50"
+                  }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-[#0F2A44]" />
+                  <span className="font-medium text-sm">Clássico</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Azul técnico profissional</p>
+                <div className="flex gap-1 mt-2">
+                  <div className="w-3 h-3 rounded bg-[#0F2A44]" title="Primary" />
+                  <div className="w-3 h-3 rounded bg-[#2D9CDB]" title="Accent" />
+                  <div className="w-3 h-3 rounded bg-[#27AE60]" title="Success" />
+                  <div className="w-3 h-3 rounded bg-[#F2C94C]" title="Warning" />
+                </div>
+              </div>
+
+              {/* Solar Palette */}
+              <div
+                onClick={() => setPalette("solar")}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${palette === "solar"
+                  ? "border-primary ring-2 ring-primary/30"
+                  : "border-border hover:border-primary/50"
+                  }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-[#E55A2B]" />
+                  <span className="font-medium text-sm">Solo Energia</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Laranja solar vibrante</p>
+                <div className="flex gap-1 mt-2">
+                  <div className="w-3 h-3 rounded bg-[#E55A2B]" title="Primary" />
+                  <div className="w-3 h-3 rounded bg-[#F5A623]" title="Accent" />
+                  <div className="w-3 h-3 rounded bg-[#27AE60]" title="Success" />
+                  <div className="w-3 h-3 rounded bg-[#DC2626]" title="Danger" />
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -98,7 +150,7 @@ export default function Settings() {
         <CardHeader><CardTitle>Branding</CardTitle></CardHeader>
         <CardContent className="space-y-6">
           <LogoUpload currentLogoUrl={settings.logo_url} />
-          
+
           <div className="space-y-2">
             <Label>Nome da Empresa</Label>
             <Input
@@ -124,6 +176,38 @@ export default function Settings() {
             />
           </div>
           <p className="text-xs text-muted-foreground">Aparecerão nos relatórios enviados aos clientes.</p>
+        </CardContent>
+      </Card>
+
+      {/* WhatsApp & Follow-up */}
+      <Card>
+        <CardHeader><CardTitle>WhatsApp e Follow-up</CardTitle></CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label>Meu WhatsApp Pessoal</Label>
+            <Input
+              placeholder="(85) 99999-9999"
+              value={settings.whatsapp_number || ""}
+              onChange={(e) => handleSave({ whatsapp_number: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Propostas e análises serão enviadas primeiro para este número para sua revisão.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Alerta de Follow-up (dias)</Label>
+              <span className="text-sm font-medium">{settings.follow_up_days || 7} dias</span>
+            </div>
+            <Slider
+              value={[settings.follow_up_days || 7]}
+              onValueChange={([value]) => handleSave({ follow_up_days: value })}
+              min={1} max={30} step={1}
+            />
+            <p className="text-xs text-muted-foreground">
+              Clientes sem contato há mais de X dias serão destacados para follow-up.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

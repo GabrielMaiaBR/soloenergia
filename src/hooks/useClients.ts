@@ -19,6 +19,8 @@ function transformClient(row: any): Client {
     monthly_generation_kwh: row.monthly_generation_kwh ? Number(row.monthly_generation_kwh) : undefined,
     energy_tariff: row.energy_tariff ? Number(row.energy_tariff) : undefined,
     notes: row.notes,
+    last_contact_date: row.last_contact_date,
+    needs_attention: row.needs_attention ?? false,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -119,6 +121,8 @@ export function useUpdateClient() {
           monthly_generation_kwh: updates.monthly_generation_kwh,
           energy_tariff: updates.energy_tariff,
           notes: updates.notes,
+          last_contact_date: updates.last_contact_date,
+          needs_attention: updates.needs_attention,
         })
         .eq("id", id)
         .select()

@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Users, FileSearch, Star, Search, Plus } from "lucide-react";
+import { Users, FileSearch, Star, Search, Plus, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ClientCard } from "@/components/dashboard/ClientCard";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useClients } from "@/hooks/useClients";
 import { useDashboardKPIs } from "@/hooks/useDashboardKPIs";
+import { useSettings } from "@/hooks/useSettings";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
@@ -15,6 +16,19 @@ export default function Dashboard() {
 
   const { data: clients = [], isLoading } = useClients();
   const { data: kpis } = useDashboardKPIs();
+  const { data: settings } = useSettings();
+
+  const followUpDays = settings?.follow_up_days || 7;
+
+  // Count clients needing attention
+  const attentionCount = useMemo(() => {
+    return clients.filter(client => {
+      const daysSinceContact = client.last_contact_date
+        ? Math.floor((Date.now() - new Date(client.last_contact_date).getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+      return client.needs_attention || (daysSinceContact !== null && daysSinceContact >= followUpDays);
+    }).length;
+  }, [clients, followUpDays]);
 
   const filteredClients = clients.filter((client) => {
     const query = searchQuery.toLowerCase();
@@ -28,6 +42,7 @@ export default function Dashboard() {
   const kpiData = [
     { label: "Total de Clientes", value: kpis?.total_clients || 0, icon: Users, color: "text-primary" },
     { label: "Em Análise", value: kpis?.proposals_in_analysis || 0, icon: FileSearch, color: "text-solo-warning" },
+    { label: "Precisam Atenção", value: attentionCount, icon: AlertTriangle, color: "text-solo-danger" },
     { label: "Favoritas", value: kpis?.favorite_simulations || 0, icon: Star, color: "text-solo-success" },
   ];
 
@@ -46,7 +61,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         {kpiData.map((kpi) => (
           <Card key={kpi.label} className="transition-solo hover:shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between pb-2">

@@ -9,6 +9,8 @@ import Dashboard from "@/pages/Dashboard";
 import ClientCockpit from "@/pages/ClientCockpit";
 import ProposalPage from "@/pages/ProposalPage";
 import PresentationMode from "@/pages/PresentationMode";
+import ReverseCalculator from "@/pages/ReverseCalculator";
+import Pipeline from "@/pages/Pipeline";
 import Settings from "@/pages/Settings";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
@@ -32,6 +34,8 @@ const App = () => (
             </ProtectedRoute>
           }>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/calculator" element={<ReverseCalculator />} />
+            <Route path="/pipeline" element={<Pipeline />} />
             <Route path="/client/:id" element={<ClientCockpit />} />
             <Route path="/proposal/:id" element={<ProposalPage />} />
             <Route path="/settings" element={<Settings />} />

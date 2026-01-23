@@ -27,6 +27,10 @@ export interface Client {
   monthly_generation_kwh?: number;
   energy_tariff?: number;
   notes?: string;
+  // Follow-up tracking
+  last_contact_date?: string;
+  needs_attention?: boolean;
+  // Timestamps
   created_at: string;
   updated_at: string;
 }
@@ -86,6 +90,10 @@ export interface AppSettings {
   primary_color?: string;
   contact_phone?: string;
   contact_email?: string;
+  // WhatsApp for reports
+  whatsapp_number?: string;
+  // Follow-up settings
+  follow_up_days?: number;
   // Auth
   pin_hash?: string;
   created_at: string;
