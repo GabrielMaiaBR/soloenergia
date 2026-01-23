@@ -20,6 +20,7 @@ import {
     Share2,
     Presentation,
 } from "lucide-react";
+import { PaybackGauge } from "@/components/charts/PaybackGauge";
 import { useClient } from "@/hooks/useClients";
 import { useClientSimulations } from "@/hooks/useSimulations";
 import { useSettings } from "@/hooks/useSettings";
@@ -138,16 +139,49 @@ export default function ProposalPage() {
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8 max-w-5xl">
                 {/* Hero Section */}
-                <section className="text-center mb-12">
-                    <Badge className="mb-4 bg-primary/10 text-primary border-none">
-                        Proposta Personalizada
-                    </Badge>
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                        Olá, <span className="text-primary">{client.name.split(" ")[0]}</span>!
-                    </h1>
-                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                        Preparamos uma proposta exclusiva para você começar a economizar com energia solar.
-                    </p>
+                {/* Hero Section */}
+                <section className="grid lg:grid-cols-2 gap-12 items-center mb-16 animate-fade-in">
+                    <div className="text-left space-y-6">
+                        <Badge className="bg-primary/10 text-primary border-none text-base py-1 px-4">
+                            Proposta Exclusiva
+                        </Badge>
+                        <h1 className="text-4xl md:text-6xl font-bold leading-tight tracking-tight">
+                            Olá, <span className="text-primary">{client.name.split(" ")[0]}</span>!
+                            <br />
+                            <span className="text-foreground/80 text-3xl md:text-5xl">Sua economia começa agora.</span>
+                        </h1>
+                        <p className="text-xl text-muted-foreground leading-relaxed max-w-lg">
+                            Analisamos seu consumo e projetamos o sistema ideal para zerar sua conta de luz com o melhor retorno financeiro.
+                        </p>
+                        <div className="flex gap-4 pt-2">
+                            <Button size="lg" className="rounded-full px-8 text-lg h-12 shadow-lg shadow-primary/25">
+                                Ver Detalhes
+                            </Button>
+                            <Button size="lg" variant="outline" className="rounded-full px-8 text-lg h-12">
+                                Falar com Consultor
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center lg:justify-end relative">
+                        {/* Background glow */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-primary/20 blur-[80px] rounded-full -z-10" />
+
+                        <div className="relative transform hover:scale-105 transition-transform duration-500 w-full max-w-md">
+                            {simulation && simulation.payback_months ? (
+                                <PaybackGauge
+                                    years={Math.floor(simulation.payback_months / 12)}
+                                    months={simulation.payback_months % 12}
+                                />
+                            ) : (
+                                <Card className="p-8 text-center">
+                                    <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                                    <h3 className="text-lg font-medium">Payback em cálculo</h3>
+                                    <p className="text-sm text-muted-foreground">Complete a simulação para ver o retorno.</p>
+                                </Card>
+                            )}
+                        </div>
+                    </div>
                 </section>
 
                 {/* Key Metrics */}
@@ -324,11 +358,13 @@ export default function ProposalPage() {
                                 description: "Imóvel valoriza até 8%",
                             },
                         ].map((benefit, i) => (
-                            <Card key={i} className="text-center">
-                                <CardContent className="pt-6">
-                                    <benefit.icon className="h-8 w-8 mx-auto mb-3 text-primary" />
-                                    <h3 className="font-semibold mb-1">{benefit.title}</h3>
-                                    <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                            <Card key={i} className="text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-primary/10 bg-card/50 backdrop-blur-sm group">
+                                <CardContent className="pt-8 pb-8">
+                                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
+                                        <benefit.icon className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-3">{benefit.title}</h3>
+                                    <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
                                 </CardContent>
                             </Card>
                         ))}

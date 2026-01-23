@@ -22,6 +22,8 @@ import { LCOEIndicator } from "@/components/charts/LCOEIndicator";
 import { FinancialProjectionTable } from "@/components/charts/FinancialProjectionTable";
 import { TechnicalPremisesPanel } from "@/components/charts/TechnicalPremisesPanel";
 import { ProposalKPIs } from "@/components/dashboard/ProposalKPIs";
+import { PaybackGauge } from "@/components/charts/PaybackGauge";
+import { ROIRadial } from "@/components/charts/ROIRadial";
 import { formatCurrency, calculateRealEconomy, calculateLCOE, calculatePayback } from "@/lib/financial";
 import { openWhatsApp, generateProposalMessage } from "@/lib/whatsapp";
 
@@ -89,6 +91,12 @@ export default function ClientCockpit() {
     }
     return accumulated;
   }, [client, monthlyEconomy, premises.tariffIncreaseRate]);
+
+  // Calculate ROI Percentage (Project ROI)
+  const roiPercentage = useMemo(() => {
+    if (systemValue <= 0) return 0;
+    return ((accumulatedSavings25Years - systemValue) / systemValue) * 100;
+  }, [accumulatedSavings25Years, systemValue]);
 
   // Calculate crossover year (when cumulative savings > cumulative cost) - MUST be before early return
   const crossoverYear = useMemo(() => {
@@ -265,6 +273,16 @@ export default function ClientCockpit() {
         <TabsContent value="proposal" className="mt-6 space-y-6">
           {monthlyEconomy > 0 && systemValue > 0 ? (
             <>
+              <div className="grid gap-6 md:grid-cols-2 mb-2 animate-scale-in">
+                <PaybackGauge
+                  years={paybackResult.years === Infinity ? 0 : Math.floor(paybackResult.months / 12)}
+                  months={paybackResult.years === Infinity ? 0 : paybackResult.months % 12}
+                />
+                <ROIRadial
+                  roi={roiPercentage}
+                />
+              </div>
+
               {/* KPIs */}
               <ProposalKPIs
                 paybackYears={paybackResult.years === Infinity ? 0 : Math.floor(paybackResult.months / 12)}

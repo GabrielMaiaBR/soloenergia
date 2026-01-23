@@ -110,7 +110,7 @@ export default function ReverseCalculator() {
                                 min={100}
                                 max={3000}
                                 step={50}
-                                className="py-4"
+                                className="py-4 transition-all hover:scale-[1.01]"
                             />
                             <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>R$ 100</span>
@@ -123,6 +123,7 @@ export default function ReverseCalculator() {
                                         key={value}
                                         variant={budget === value ? "default" : "outline"}
                                         size="sm"
+                                        className="transition-all hover:scale-105 active:scale-95"
                                         onClick={() => setBudget(value)}
                                     >
                                         R$ {value}
@@ -164,8 +165,8 @@ export default function ReverseCalculator() {
                             />
                         </div>
 
-                        {/* Info Card */}
-                        <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        {/* Info Card - Animated */}
+                        <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 animate-pulse-gentle">
                             <div className="flex items-start gap-3">
                                 <Sparkles className="h-5 w-5 text-primary mt-0.5" />
                                 <div className="text-sm">

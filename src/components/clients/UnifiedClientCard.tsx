@@ -4,10 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  TrendingUp, TrendingDown, DollarSign, Percent, Clock, 
+import {
+  TrendingUp, TrendingDown, DollarSign, Percent, Clock,
   Zap, Star, Edit, Trash2, CreditCard, Banknote, Wallet,
-  Info, AlertCircle, CheckCircle, Calculator
+  Info, AlertCircle, CheckCircle, Calculator, Crown
 } from "lucide-react";
 import type { Simulation, Client } from "@/types";
 import { formatCurrency, formatPercent, calculatePayback, calculateDetailedPayback, calculateRealEconomy } from "@/lib/financial";
@@ -53,7 +53,7 @@ export function UnifiedClientCard({
   const toggleFavorite = useToggleFavorite();
   const deleteSimulation = useDeleteSimulation();
 
-  const selectedSim = useMemo(() => 
+  const selectedSim = useMemo(() =>
     simulations.find(s => s.id === selectedSimId),
     [simulations, selectedSimId]
   );
@@ -74,16 +74,16 @@ export function UnifiedClientCard({
     // Calculate proper payback
     const paybackResult = isFinanced && selectedSim.installment_value && selectedSim.installments
       ? calculateDetailedPayback(
-          selectedSim.system_value,
-          selectedSim.installment_value,
-          selectedSim.installments,
-          monthlyEconomy,
-          tariffIncrease
-        )
+        selectedSim.system_value,
+        selectedSim.installment_value,
+        selectedSim.installments,
+        monthlyEconomy,
+        tariffIncrease
+      )
       : calculatePayback(selectedSim.system_value, monthlyEconomy, tariffIncrease);
 
     // 25-year projection
-    const monthlyIncreaseRate = Math.pow(1 + tariffIncrease / 100, 1/12) - 1;
+    const monthlyIncreaseRate = Math.pow(1 + tariffIncrease / 100, 1 / 12) - 1;
     let total25YearSavings = 0;
     let currentMonthlyEconomy = monthlyEconomy;
     for (let month = 1; month <= 300; month++) {
@@ -145,7 +145,10 @@ export function UnifiedClientCard({
 
   return (
     <TooltipProvider>
-      <Card className="overflow-hidden">
+      <Card className={cn(
+        "overflow-hidden transition-all duration-500",
+        selectedSim?.is_favorite ? "border-solo-warning/50 shadow-lg shadow-solo-warning/10 ring-1 ring-solo-warning/20" : ""
+      )}>
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between">
             <div>
@@ -202,6 +205,12 @@ export function UnifiedClientCard({
                 <Icon className={cn("h-5 w-5", config?.color)} />
                 <span className="font-medium">{config?.label}</span>
                 <Badge variant="outline">v{selectedSim.version}</Badge>
+                {selectedSim.is_favorite && (
+                  <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-none animate-pulse-gentle">
+                    <Crown className="w-3 h-3 mr-1 fill-current" />
+                    Recomendada
+                  </Badge>
+                )}
               </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingSimulation(selectedSim)}>
@@ -335,7 +344,7 @@ export function UnifiedClientCard({
                   <TooltipContent className="max-w-xs">
                     <p className="font-medium mb-1">Como é calculado?</p>
                     <p className="text-xs">
-                      O payback indica quanto tempo leva para a economia acumulada 
+                      O payback indica quanto tempo leva para a economia acumulada
                       igualar o investimento total (incluindo juros no financiamento).
                     </p>
                     {selectedSim.tariff_increase_rate && selectedSim.tariff_increase_rate > 0 && (
@@ -353,8 +362,8 @@ export function UnifiedClientCard({
 
               {/* Progress bar showing payback relative to 25 years */}
               <div className="space-y-1">
-                <Progress 
-                  value={Math.min((metrics.payback.months / 300) * 100, 100)} 
+                <Progress
+                  value={Math.min((metrics.payback.months / 300) * 100, 100)}
                   className="h-2"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">

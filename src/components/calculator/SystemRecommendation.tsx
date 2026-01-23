@@ -12,6 +12,7 @@ import {
 import { formatCurrency } from "@/lib/financial";
 import type { ReverseCalcResult } from "@/lib/reverse-calculator";
 import { cn } from "@/lib/utils";
+import { ROIRadial } from "@/components/charts/ROIRadial";
 
 interface SystemRecommendationProps {
     recommendation: ReverseCalcResult['recommendation'];
@@ -74,24 +75,32 @@ export function SystemRecommendation({
             </Card>
 
             {/* Long Term Projection */}
-            <Card className="bg-gradient-to-br from-solo-success/5 to-transparent border-solo-success/30">
-                <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-full bg-solo-success/10">
-                            <PiggyBank className="h-8 w-8 text-solo-success" />
+            {/* Long Term Projection & ROI */}
+            <div className="grid md:grid-cols-3 gap-4">
+                <Card className="md:col-span-2 bg-gradient-to-br from-solo-success/5 to-transparent border-solo-success/30 flex items-center">
+                    <CardContent className="p-6 w-full">
+                        <div className="flex items-center gap-4">
+                            <div className="p-4 rounded-full bg-solo-success/10 animate-pulse-gentle">
+                                <PiggyBank className="h-8 w-8 text-solo-success" />
+                            </div>
+                            <div className="flex-1 space-y-1">
+                                <h4 className="font-semibold text-xl">
+                                    Economia Total: <span className="text-solo-success">{formatCurrency(longTermProjection.totalSavings25Years)}</span>
+                                </h4>
+                                <p className="text-muted-foreground">
+                                    Em 25 anos, você deixa de gastar esse valor com energia elétrica.
+                                    <br />
+                                    <span className="text-sm opacity-80">Média de {formatCurrency(longTermProjection.averageAnnualSavings)}/ano</span>
+                                </p>
+                            </div>
                         </div>
-                        <div className="flex-1">
-                            <h4 className="font-semibold text-lg">
-                                Economia em 25 anos: <span className="text-solo-success">{formatCurrency(longTermProjection.totalSavings25Years)}</span>
-                            </h4>
-                            <p className="text-muted-foreground">
-                                Média de {formatCurrency(longTermProjection.averageAnnualSavings)}/ano •
-                                <span className="text-solo-success font-medium ml-1">ROI de {longTermProjection.roi}%</span>
-                            </p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+
+                <div className="h-full">
+                    <ROIRadial roi={longTermProjection.roi} label="ROI do Sistema" />
+                </div>
+            </div>
 
             {/* Scenarios Comparison */}
             <div className="grid md:grid-cols-2 gap-4">
