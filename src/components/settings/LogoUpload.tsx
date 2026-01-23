@@ -40,9 +40,32 @@ export function LogoUpload({ currentLogoUrl }: LogoUploadProps) {
       const fileName = `company-logo-${Date.now()}.${fileExt}`;
 
       // Upload to Supabase storage
-      const { error: uploadError } = await supabase.storage
+      let { error: uploadError } = await supabase.storage
         .from("logos")
         .upload(fileName, file, { upsert: true });
+
+      // Handle "Bucket not found" by creating it
+      if (uploadError && (uploadError.message.includes("Bucket not found") || uploadError.message.includes("The resource was not found"))) {
+        console.log("Bucket not found, attempting to create...");
+        const { error: createError } = await supabase.storage.createBucket("logos", {
+          public: true,
+          fileSizeLimit: 2097152, // 2MB
+          allowedMimeTypes: ["image/png", "image/jpeg", "image/svg+xml", "image/gif"]
+        });
+
+        if (createError) {
+          // If creation fails (e.g. permissions), throw the original error
+          console.error("Failed to create bucket:", createError);
+          throw uploadError;
+        }
+
+        // Retry upload
+        const { error: retryError } = await supabase.storage
+          .from("logos")
+          .upload(fileName, file, { upsert: true });
+
+        uploadError = retryError;
+      }
 
       if (uploadError) throw uploadError;
 
@@ -79,7 +102,7 @@ export function LogoUpload({ currentLogoUrl }: LogoUploadProps) {
   return (
     <div className="space-y-4">
       <Label>Logo da Empresa</Label>
-      
+
       {/* Preview */}
       <div className="flex items-center gap-4">
         <div className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/30 overflow-hidden">

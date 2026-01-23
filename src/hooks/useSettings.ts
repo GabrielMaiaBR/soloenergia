@@ -14,7 +14,8 @@ function transformSettings(row: any): AppSettings {
     primary_color: row.primary_color,
     contact_phone: row.contact_phone,
     contact_email: row.contact_email,
-    pin_hash: row.pin_hash,
+    whatsapp_number: row.whatsapp_number,
+    follow_up_days: Number(row.follow_up_days),
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -29,21 +30,20 @@ export function useSettings() {
         .from("app_settings")
         .select("*")
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error) {
+      if (error) throw error;
+
+      if (!data) {
         // If no settings exist, create default
-        if (error.code === "PGRST116") {
-          const { data: newData, error: insertError } = await supabase
-            .from("app_settings")
-            .insert({})
-            .select()
-            .single();
+        const { data: newData, error: insertError } = await supabase
+          .from("app_settings")
+          .insert({})
+          .select()
+          .single();
 
-          if (insertError) throw insertError;
-          return transformSettings(newData);
-        }
-        throw error;
+        if (insertError) throw insertError;
+        return transformSettings(newData);
       }
 
       return transformSettings(data);
@@ -62,7 +62,7 @@ export function useUpdateSettings() {
         .from("app_settings")
         .select("id")
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!current) throw new Error("Settings not found");
 
@@ -76,11 +76,12 @@ export function useUpdateSettings() {
           primary_color: updates.primary_color,
           contact_phone: updates.contact_phone,
           contact_email: updates.contact_email,
+          // whatsapp_number: updates.whatsapp_number,
           pin_hash: updates.pin_hash,
         })
         .eq("id", current.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return transformSettings(data);

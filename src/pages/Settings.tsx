@@ -4,12 +4,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Download, Moon, Sun } from "lucide-react";
+import { Download, Moon, Sun, Save } from "lucide-react";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { useClients } from "@/hooks/useClients";
 import { useTheme } from "@/hooks/useTheme";
 import { LogoUpload } from "@/components/settings/LogoUpload";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import type { AppSettings } from "@/types";
 
 export default function Settings() {
   const { data: settings, isLoading } = useSettings();
@@ -17,9 +19,27 @@ export default function Settings() {
   const updateSettings = useUpdateSettings();
   const { theme, toggleTheme, palette, setPalette } = useTheme();
 
-  const handleSave = async (updates: Partial<typeof settings>) => {
+  const [form, setForm] = useState<Partial<AppSettings>>({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setForm(settings);
+    }
+  }, [settings]);
+
+  const handleChange = (field: keyof AppSettings, value: any) => {
+    setForm(prev => {
+      const next = { ...prev, [field]: value };
+      setIsDirty(true);
+      return next;
+    });
+  };
+
+  const handleSave = async () => {
     if (!settings) return;
-    await updateSettings.mutateAsync(updates);
+    await updateSettings.mutateAsync(form);
+    setIsDirty(false);
   };
 
   const handleExport = () => {
@@ -40,9 +60,15 @@ export default function Settings() {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-semibold">Configurações</h1>
-        <p className="text-muted-foreground">Personalize o Solo Smart para seu negócio</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Configurações</h1>
+          <p className="text-muted-foreground">Personalize o Solo Smart para seu negócio</p>
+        </div>
+        <Button onClick={handleSave} disabled={!isDirty || updateSettings.isPending}>
+          <Save className="h-4 w-4 mr-2" />
+          {updateSettings.isPending ? "Salvando..." : "Salvar Alterações"}
+        </Button>
       </div>
 
       {/* Appearance */}
@@ -125,11 +151,11 @@ export default function Settings() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Fator de Compensação (Fio B)</Label>
-              <span className="text-sm font-medium">{(settings.lei_14300_factor * 100).toFixed(0)}%</span>
+              <span className="text-sm font-medium">{((form.lei_14300_factor || 0) * 100).toFixed(0)}%</span>
             </div>
             <Slider
-              value={[settings.lei_14300_factor * 100]}
-              onValueChange={([value]) => handleSave({ lei_14300_factor: value / 100 })}
+              value={[(form.lei_14300_factor || 0) * 100]}
+              onValueChange={([value]) => handleChange('lei_14300_factor', value / 100)}
               min={50} max={100} step={1}
             />
             <p className="text-xs text-muted-foreground">Define quanto da geração é compensada após a Lei 14.300.</p>
@@ -138,8 +164,8 @@ export default function Settings() {
             <Label>Tarifa Padrão (R$/kWh)</Label>
             <Input
               type="number" step="0.01"
-              value={settings.default_tariff}
-              onChange={(e) => handleSave({ default_tariff: parseFloat(e.target.value) || 0.85 })}
+              value={form.default_tariff || ""}
+              onChange={(e) => handleChange('default_tariff', parseFloat(e.target.value) || 0)}
             />
           </div>
         </CardContent>
@@ -155,24 +181,24 @@ export default function Settings() {
             <Label>Nome da Empresa</Label>
             <Input
               placeholder="Sua Empresa Solar"
-              value={settings.company_name || ""}
-              onChange={(e) => handleSave({ company_name: e.target.value })}
+              value={form.company_name || ""}
+              onChange={(e) => handleChange('company_name', e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label>WhatsApp / Telefone</Label>
             <Input
               placeholder="(11) 99999-9999"
-              value={settings.contact_phone || ""}
-              onChange={(e) => handleSave({ contact_phone: e.target.value })}
+              value={form.contact_phone || ""}
+              onChange={(e) => handleChange('contact_phone', e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label>E-mail</Label>
             <Input
               type="email" placeholder="contato@empresa.com"
-              value={settings.contact_email || ""}
-              onChange={(e) => handleSave({ contact_email: e.target.value })}
+              value={form.contact_email || ""}
+              onChange={(e) => handleChange('contact_email', e.target.value)}
             />
           </div>
           <p className="text-xs text-muted-foreground">Aparecerão nos relatórios enviados aos clientes.</p>
@@ -187,8 +213,8 @@ export default function Settings() {
             <Label>Meu WhatsApp Pessoal</Label>
             <Input
               placeholder="(85) 99999-9999"
-              value={settings.whatsapp_number || ""}
-              onChange={(e) => handleSave({ whatsapp_number: e.target.value })}
+              value={form.whatsapp_number || ""}
+              onChange={(e) => handleChange('whatsapp_number', e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
               Propostas e análises serão enviadas primeiro para este número para sua revisão.
@@ -197,11 +223,11 @@ export default function Settings() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Alerta de Follow-up (dias)</Label>
-              <span className="text-sm font-medium">{settings.follow_up_days || 7} dias</span>
+              <span className="text-sm font-medium">{form.follow_up_days || 7} dias</span>
             </div>
             <Slider
-              value={[settings.follow_up_days || 7]}
-              onValueChange={([value]) => handleSave({ follow_up_days: value })}
+              value={[form.follow_up_days || 7]}
+              onValueChange={([value]) => handleChange('follow_up_days', value)}
               min={1} max={30} step={1}
             />
             <p className="text-xs text-muted-foreground">

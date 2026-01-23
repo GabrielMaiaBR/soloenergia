@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/types";
 
-export type PipelineStage = 'lead' | 'analise' | 'proposta' | 'negociacao' | 'fechado';
+export type PipelineStage = 'lead' | 'analysis' | 'closed' | 'lost';
 
 interface KanbanColumnProps {
     stage: PipelineStage;
@@ -22,10 +22,9 @@ interface KanbanColumnProps {
 
 const stageIcons: Record<PipelineStage, string> = {
     lead: "👋",
-    analise: "🔍",
-    proposta: "📋",
-    negociacao: "💬",
-    fechado: "🎉",
+    analysis: "🔍",
+    closed: "🎉",
+    lost: "❌",
 };
 
 // Cores vibrantes para cada etapa
@@ -41,29 +40,23 @@ const stageColors: Record<PipelineStage, {
         border: "border-slate-500/30",
         dropzone: "bg-slate-500/20 border-slate-500"
     },
-    analise: {
+    analysis: {
         header: "bg-gradient-to-r from-blue-600 to-blue-500",
         badge: "bg-blue-500 text-white",
         border: "border-blue-500/30",
         dropzone: "bg-blue-500/20 border-blue-500"
     },
-    proposta: {
-        header: "bg-gradient-to-r from-purple-600 to-purple-500",
-        badge: "bg-purple-500 text-white",
-        border: "border-purple-500/30",
-        dropzone: "bg-purple-500/20 border-purple-500"
-    },
-    negociacao: {
-        header: "bg-gradient-to-r from-orange-600 to-orange-500",
-        badge: "bg-orange-500 text-white",
-        border: "border-orange-500/30",
-        dropzone: "bg-orange-500/20 border-orange-500"
-    },
-    fechado: {
+    closed: {
         header: "bg-gradient-to-r from-green-600 to-green-500",
         badge: "bg-green-500 text-white",
         border: "border-green-500/30",
         dropzone: "bg-green-500/20 border-green-500"
+    },
+    lost: {
+        header: "bg-gradient-to-r from-red-600 to-red-500",
+        badge: "bg-red-500 text-white",
+        border: "border-red-500/30",
+        dropzone: "bg-red-500/20 border-red-500"
     },
 };
 

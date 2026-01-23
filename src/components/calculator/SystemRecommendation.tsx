@@ -98,7 +98,17 @@ export function SystemRecommendation({
                 </Card>
 
                 <div className="h-full">
-                    <ROIRadial roi={longTermProjection.roi} label="ROI do Sistema" />
+                    <Card className="h-full flex flex-col justify-center items-center p-6 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+                        <div className="text-center space-y-2">
+                            <h3 className="text-lg font-medium text-muted-foreground">Retorno do Investimento</h3>
+                            <div className="text-3xl font-bold text-solo-success">
+                                {longTermProjection.roi.toFixed(0)}%
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                R$ 1,00 investido retorna <span className="text-foreground font-bold">R$ {((longTermProjection.totalSavings25Years / (scenarios.cashflowZero.estimatedSystemValue || 1)) || 0).toFixed(2).replace('.', ',')}</span>
+                            </p>
+                        </div>
+                    </Card>
                 </div>
             </div>
 

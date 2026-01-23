@@ -11,7 +11,6 @@ import {
     TrendingUp,
     Shield,
     Zap,
-    Clock,
     Award,
     Phone,
     Mail,
@@ -19,8 +18,8 @@ import {
     Download,
     Share2,
     Presentation,
+    Calendar,
 } from "lucide-react";
-import { PaybackGauge } from "@/components/charts/PaybackGauge";
 import { useClient } from "@/hooks/useClients";
 import { useClientSimulations } from "@/hooks/useSimulations";
 import { useSettings } from "@/hooks/useSettings";
@@ -168,18 +167,12 @@ export default function ProposalPage() {
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-primary/20 blur-[80px] rounded-full -z-10" />
 
                         <div className="relative transform hover:scale-105 transition-transform duration-500 w-full max-w-md">
-                            {simulation && simulation.payback_months ? (
-                                <PaybackGauge
-                                    years={Math.floor(simulation.payback_months / 12)}
-                                    months={simulation.payback_months % 12}
-                                />
-                            ) : (
-                                <Card className="p-8 text-center">
-                                    <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                                    <h3 className="text-lg font-medium">Payback em cálculo</h3>
-                                    <p className="text-sm text-muted-foreground">Complete a simulação para ver o retorno.</p>
-                                </Card>
-                            )}
+                            <div className="bg-card/50 backdrop-blur-sm border border-border p-8 rounded-3xl shadow-2xl text-center">
+                                <h3 className="text-lg text-muted-foreground mb-4">Retorno sobre Investimento</h3>
+                                <p className="text-lg text-muted-foreground">
+                                    Para cada <strong>R$ 1,00</strong> investido, você recebe de volta aproximadamente <strong className="text-solo-success">R$ {((economy25Years / simulation.system_value) || 0).toFixed(2).replace('.', ',')}</strong> ao longo de 25 anos.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -230,7 +223,7 @@ export default function ProposalPage() {
                 {simulation && (
                     <section className="mb-12">
                         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                            <Clock className="h-6 w-6 text-primary" />
+                            <Calendar className="h-6 w-6 text-primary" />
                             Condição de Pagamento
                         </h2>
 

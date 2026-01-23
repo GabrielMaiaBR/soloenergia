@@ -16,42 +16,23 @@ interface StageConfig {
 
 const STAGES: StageConfig[] = [
     { stage: 'lead', title: 'Lead' },
-    { stage: 'analise', title: 'Análise' },
-    { stage: 'proposta', title: 'Proposta' },
-    { stage: 'negociacao', title: 'Negociação' },
-    { stage: 'fechado', title: 'Fechado' },
+    { stage: 'analysis', title: 'Análise / Negociação' },
+    { stage: 'closed', title: 'Fechado' },
+    { stage: 'lost', title: 'Perdido' },
 ];
 
 /**
  * Determina a etapa do pipeline com base nos dados do cliente.
  */
 function determineStage(client: Client): PipelineStage {
-    // Se status é closed, está Fechado
-    if (client.status === 'closed') {
-        return 'fechado';
-    }
+    if (client.status) return client.status;
 
-    // Se não tem potência, é Lead
-    if (!client.system_power_kwp || client.system_power_kwp === 0) {
-        return 'lead';
-    }
+    // Fallback logic if status is somehow empty (should not happen with types)
+    if (client.status === 'closed') return 'closed';
+    if (client.status === 'lost') return 'lost';
+    if (!client.system_power_kwp) return 'lead';
 
-    // Se não tem geração estimada, está em Análise
-    if (!client.monthly_generation_kwh || client.monthly_generation_kwh === 0) {
-        return 'analise';
-    }
-
-    // Se tem contato há menos de 3 dias, está em Negociação
-    const daysSinceContact = client.last_contact_date
-        ? Math.floor((Date.now() - new Date(client.last_contact_date).getTime()) / (1000 * 60 * 60 * 24))
-        : null;
-
-    if (daysSinceContact !== null && daysSinceContact < 3) {
-        return 'negociacao';
-    }
-
-    // Default: Proposta
-    return 'proposta';
+    return 'analysis';
 }
 
 export function KanbanBoard({ clients, followUpDays = 7, onClientMove }: KanbanBoardProps) {
@@ -71,10 +52,9 @@ export function KanbanBoard({ clients, followUpDays = 7, onClientMove }: KanbanB
     const clientsByStage = useMemo(() => {
         const result: Record<PipelineStage, Client[]> = {
             lead: [],
-            analise: [],
-            proposta: [],
-            negociacao: [],
-            fechado: [],
+            analysis: [],
+            closed: [],
+            lost: [],
         };
 
         clients.forEach(client => {

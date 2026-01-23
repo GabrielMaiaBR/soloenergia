@@ -17,41 +17,45 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Public route */}
-          <Route path="/auth" element={<Auth />} />
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public route */}
+            <Route path="/auth" element={<Auth />} />
 
-          {/* Protected routes */}
-          <Route element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/calculator" element={<ReverseCalculator />} />
-            <Route path="/pipeline" element={<Pipeline />} />
-            <Route path="/client/:id" element={<ClientCockpit />} />
-            <Route path="/proposal/:id" element={<ProposalPage />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
+            {/* Protected routes */}
+            <Route element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/calculator" element={<ReverseCalculator />} />
+              <Route path="/pipeline" element={<Pipeline />} />
+              <Route path="/client/:id" element={<ClientCockpit />} />
+              <Route path="/proposal/:id" element={<ProposalPage />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
 
-          {/* Fullscreen presentation mode */}
-          <Route path="/presentation/:id" element={
-            <ProtectedRoute>
-              <PresentationMode />
-            </ProtectedRoute>
-          } />
+            {/* Fullscreen presentation mode */}
+            <Route path="/presentation/:id" element={
+              <ProtectedRoute>
+                <PresentationMode />
+              </ProtectedRoute>
+            } />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

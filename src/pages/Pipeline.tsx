@@ -17,12 +17,15 @@ import {
     AlertTriangle,
     RefreshCw
 } from "lucide-react";
-import { useClients } from "@/hooks/useClients";
+import { useClients, useUpdateClient } from "@/hooks/useClients";
 import { useSettings } from "@/hooks/useSettings";
 import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
+import { toast } from "sonner";
+import type { ClientStatus } from "@/types";
 
 export default function Pipeline() {
     const { data: clients = [], isLoading, refetch } = useClients();
+    const updateClient = useUpdateClient();
     const { data: settings } = useSettings();
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +33,19 @@ export default function Pipeline() {
     const [showOnlyAttention, setShowOnlyAttention] = useState(false);
 
     const followUpDays = settings?.follow_up_days || 7;
+
+    const handleClientMove = async (clientId: string, newStage: ClientStatus) => {
+        try {
+            await updateClient.mutateAsync({
+                id: clientId,
+                status: newStage
+            });
+            toast.success("Cliente movido com sucesso!");
+        } catch (error) {
+            console.error("Error moving client:", error);
+            toast.error("Erro ao mover cliente.");
+        }
+    };
 
     // Filter clients
     const filteredClients = clients.filter(client => {
@@ -155,6 +171,7 @@ export default function Pipeline() {
             <KanbanBoard
                 clients={filteredClients}
                 followUpDays={followUpDays}
+                onClientMove={handleClientMove}
             />
         </div>
     );

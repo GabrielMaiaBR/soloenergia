@@ -22,8 +22,6 @@ import { LCOEIndicator } from "@/components/charts/LCOEIndicator";
 import { FinancialProjectionTable } from "@/components/charts/FinancialProjectionTable";
 import { TechnicalPremisesPanel } from "@/components/charts/TechnicalPremisesPanel";
 import { ProposalKPIs } from "@/components/dashboard/ProposalKPIs";
-import { PaybackGauge } from "@/components/charts/PaybackGauge";
-import { ROIRadial } from "@/components/charts/ROIRadial";
 import { formatCurrency, calculateRealEconomy, calculateLCOE, calculatePayback } from "@/lib/financial";
 import { openWhatsApp, generateProposalMessage } from "@/lib/whatsapp";
 
@@ -273,17 +271,6 @@ export default function ClientCockpit() {
         <TabsContent value="proposal" className="mt-6 space-y-6">
           {monthlyEconomy > 0 && systemValue > 0 ? (
             <>
-              <div className="grid gap-6 md:grid-cols-2 mb-2 animate-scale-in">
-                <PaybackGauge
-                  years={paybackResult.years === Infinity ? 0 : Math.floor(paybackResult.months / 12)}
-                  months={paybackResult.years === Infinity ? 0 : paybackResult.months % 12}
-                />
-                <ROIRadial
-                  roi={roiPercentage}
-                />
-              </div>
-
-              {/* KPIs */}
               <ProposalKPIs
                 paybackYears={paybackResult.years === Infinity ? 0 : Math.floor(paybackResult.months / 12)}
                 paybackMonths={paybackResult.years === Infinity ? 0 : paybackResult.months % 12}
@@ -294,6 +281,19 @@ export default function ClientCockpit() {
                 currentTariff={tariff}
                 systemValue={systemValue}
               />
+
+              {/* ROI Text Display - Replaces Charts */}
+              <div className="bg-gradient-to-r from-primary/10 to-transparent p-6 rounded-lg border border-primary/20">
+                <div className="flex flex-col items-center justify-center text-center gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-primary mb-1">Retorno sobre Investimento</h3>
+                    <p className="text-muted-foreground max-w-xl mx-auto">
+                      Para cada <strong className="text-foreground">R$ 1,00</strong> investido no seu sistema solar,
+                      você recebe de volta aproximadamente <strong className="text-solo-success">R$ {((accumulatedSavings25Years / systemValue) || 0).toFixed(2).replace('.', ',')}</strong> ao longo de 25 anos.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Crocodile Mouth Chart */}
               <CrocodileMouthChart
