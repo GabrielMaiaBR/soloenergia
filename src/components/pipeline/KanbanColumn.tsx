@@ -10,8 +10,14 @@ interface KanbanColumnProps {
     stage: PipelineStage;
     title: string;
     clients: Client[];
-    color: string;
     followUpDays?: number;
+    // Drag and drop
+    onDragStart?: (clientId: string) => void;
+    onDragEnd?: () => void;
+    onDragOver?: () => void;
+    onDrop?: () => void;
+    isDragOver?: boolean;
+    draggedClientId?: string | null;
 }
 
 const stageIcons: Record<PipelineStage, string> = {
@@ -22,11 +28,62 @@ const stageIcons: Record<PipelineStage, string> = {
     fechado: "🎉",
 };
 
-export function KanbanColumn({ stage, title, clients, color, followUpDays = 7 }: KanbanColumnProps) {
+// Cores vibrantes para cada etapa
+const stageColors: Record<PipelineStage, {
+    header: string;
+    badge: string;
+    border: string;
+    dropzone: string;
+}> = {
+    lead: {
+        header: "bg-gradient-to-r from-slate-600 to-slate-500",
+        badge: "bg-slate-500 text-white",
+        border: "border-slate-500/30",
+        dropzone: "bg-slate-500/20 border-slate-500"
+    },
+    analise: {
+        header: "bg-gradient-to-r from-blue-600 to-blue-500",
+        badge: "bg-blue-500 text-white",
+        border: "border-blue-500/30",
+        dropzone: "bg-blue-500/20 border-blue-500"
+    },
+    proposta: {
+        header: "bg-gradient-to-r from-purple-600 to-purple-500",
+        badge: "bg-purple-500 text-white",
+        border: "border-purple-500/30",
+        dropzone: "bg-purple-500/20 border-purple-500"
+    },
+    negociacao: {
+        header: "bg-gradient-to-r from-orange-600 to-orange-500",
+        badge: "bg-orange-500 text-white",
+        border: "border-orange-500/30",
+        dropzone: "bg-orange-500/20 border-orange-500"
+    },
+    fechado: {
+        header: "bg-gradient-to-r from-green-600 to-green-500",
+        badge: "bg-green-500 text-white",
+        border: "border-green-500/30",
+        dropzone: "bg-green-500/20 border-green-500"
+    },
+};
+
+export function KanbanColumn({
+    stage,
+    title,
+    clients,
+    followUpDays = 7,
+    onDragStart,
+    onDragEnd,
+    onDragOver,
+    onDrop,
+    isDragOver,
+    draggedClientId
+}: KanbanColumnProps) {
+    const colors = stageColors[stage];
+
     // Calculate total value of clients in this column
     const totalValue = useMemo(() => {
         return clients.reduce((sum, client) => {
-            // Rough estimate based on system power
             const systemValue = (client.system_power_kwp || 0) * 4500;
             return sum + systemValue;
         }, 0);
@@ -47,41 +104,66 @@ export function KanbanColumn({ stage, title, clients, color, followUpDays = 7 }:
 
     const attentionCount = clientsWithAttention.filter(c => c.needsAttention).length;
 
+    // Drag and drop handlers
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        onDragOver?.();
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        onDrop?.();
+    };
+
     return (
-        <div className="flex flex-col bg-muted/30 rounded-lg border min-w-[280px] max-w-[320px] h-full">
-            {/* Header */}
-            <div className={cn(
-                "p-3 rounded-t-lg border-b",
-                `bg-gradient-to-r ${color}`
-            )}>
-                <div className="flex items-center justify-between mb-1">
+        <div
+            className={cn(
+                "flex flex-col rounded-xl border-2 min-w-[300px] max-w-[320px] h-full bg-card/50 backdrop-blur-sm transition-all duration-200",
+                colors.border,
+                isDragOver && `${colors.dropzone} border-dashed scale-[1.02] shadow-lg`
+            )}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+        >
+            {/* Header com cor vibrante */}
+            <div className={cn("p-4 rounded-t-lg", colors.header)}>
+                <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                        <span className="text-lg">{stageIcons[stage]}</span>
-                        <h3 className="font-semibold text-sm">{title}</h3>
+                        <span className="text-xl">{stageIcons[stage]}</span>
+                        <h3 className="font-bold text-white">{title}</h3>
                     </div>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge className={cn("text-xs font-bold", colors.badge)}>
                         {clients.length}
                     </Badge>
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    {totalValue > 0 && (
-                        <span>
+                <div className="flex items-center justify-between text-xs text-white/80">
+                    {totalValue > 0 ? (
+                        <span className="font-medium">
                             R$ {(totalValue / 1000).toFixed(0)}k potencial
                         </span>
+                    ) : (
+                        <span>Nenhum valor</span>
                     )}
                     {attentionCount > 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                            {attentionCount} atenção
+                        <Badge variant="destructive" className="text-xs animate-pulse">
+                            ⚠️ {attentionCount}
                         </Badge>
                     )}
                 </div>
             </div>
 
-            {/* Cards */}
-            <div className="flex-1 p-2 space-y-2 overflow-y-auto scrollbar-solo">
+            {/* Cards area - Dropzone */}
+            <div className={cn(
+                "flex-1 p-3 space-y-3 overflow-y-auto scrollbar-solo transition-all",
+                isDragOver && "ring-2 ring-inset ring-primary/50"
+            )}>
                 {clientsWithAttention.length === 0 ? (
-                    <div className="text-center text-sm text-muted-foreground py-8 px-4">
-                        Nenhum cliente nesta etapa
+                    <div className={cn(
+                        "text-center text-sm text-muted-foreground py-12 px-4 border-2 border-dashed rounded-lg transition-all",
+                        isDragOver && "border-primary bg-primary/10 text-primary"
+                    )}>
+                        <span className="text-2xl block mb-2">{isDragOver ? "📥" : "📭"}</span>
+                        {isDragOver ? "Solte aqui!" : "Nenhum cliente nesta etapa"}
                     </div>
                 ) : (
                     clientsWithAttention.map(({ client, needsAttention }) => (
@@ -89,6 +171,9 @@ export function KanbanColumn({ stage, title, clients, color, followUpDays = 7 }:
                             key={client.id}
                             client={client}
                             needsAttention={needsAttention}
+                            isDragging={draggedClientId === client.id}
+                            onDragStart={() => onDragStart?.(client.id)}
+                            onDragEnd={onDragEnd}
                         />
                     ))
                 )}

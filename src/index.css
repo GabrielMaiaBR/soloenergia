@@ -291,20 +291,21 @@
   h1 {
     @apply text-3xl font-semibold tracking-tight leading-tight;
   }
-  
+
   h2 {
     @apply text-2xl font-semibold tracking-tight leading-tight;
   }
-  
+
   h3 {
     @apply text-xl font-medium tracking-tight leading-snug;
   }
-  
+
   h4 {
     @apply text-lg font-medium leading-snug;
   }
 
-  p, li {
+  p,
+  li {
     @apply leading-relaxed;
   }
 }
@@ -321,7 +322,7 @@
 
   /* Technical grid pattern for backgrounds */
   .bg-grid-pattern {
-    background-image: 
+    background-image:
       linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
     background-size: 24px 24px;
@@ -362,9 +363,113 @@
       transform: scaleY(0);
       transform-origin: bottom;
     }
+
     to {
       opacity: 1;
       transform: scaleY(1);
     }
+  }
+
+  /* Slide in from top */
+  .animate-slide-in-up {
+    animation: slideInUp 0.4s ease-out;
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Slide in from bottom */
+  .animate-slide-in-down {
+    animation: slideInDown 0.4s ease-out;
+  }
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scale in */
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Fade in */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Pulse glow effect for attention items */
+  .animate-attention-pulse {
+    animation: attentionPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes attentionPulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 hsl(var(--solo-danger) / 0.4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 8px hsl(var(--solo-danger) / 0);
+    }
+  }
+
+  /* Number count up effect */
+  .animate-count-up {
+    animation: countUp 0.5s ease-out;
+  }
+
+  /* Subtle hover lift */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.15);
+  }
+
+  /* Smooth color transitions */
+  .transition-colors-slow {
+    transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
   }
 }
